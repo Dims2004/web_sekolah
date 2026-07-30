@@ -19,12 +19,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #adminSidebarWrap{ transition: transform .3s ease; }
+        @media (max-width: 1023px){
+            #adminSidebarWrap{
+                position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+                transform: translateX(-100%); z-index: 50; overflow-y: auto;
+            }
+            #adminSidebarWrap.open{ transform: translateX(0); }
+            #adminSidebarBackdrop{ display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:40; }
+            #adminSidebarBackdrop.open{ display:block; }
+        }
+    </style>
 
 </head>
 <body class="bg-gray-100 min-h-screen">
 <!-- Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8">
             <div class="text-center mb-6">
                 <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
                     <i class="fas fa-lock text-3xl text-blue-600"></i>
@@ -73,36 +85,48 @@
         <nav class="bg-white shadow-lg">
             <div class="container mx-auto px-4">
                 <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center">
-                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <div class="flex items-center min-w-0">
+                        <button onclick="toggleAdminSidebar()" class="lg:hidden w-10 h-10 mr-2 flex-shrink-0 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-600">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
                             <i class="fas fa-shield-alt text-white"></i>
                         </div>
-                        <div>
-                            <h1 class="text-xl font-bold text-gray-800">Admin Dashboard</h1>
-                            <p class="text-sm text-gray-500">Sistem E-Absensi Sekolah</p>
+                        <div class="min-w-0">
+                            <h1 class="text-xl font-bold text-gray-800 truncate">Admin Dashboard</h1>
+                            <p class="text-sm text-gray-500 hidden sm:block">Sistem E-Absensi Sekolah</p>
                         </div>
                     </div>
                     
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right">
+                    <div class="flex items-center space-x-4 flex-shrink-0">
+                        <div class="text-right hidden sm:block">
                             <div class="font-medium text-gray-800" id="adminName">Administrator</div>
                             <div class="text-sm text-gray-500" id="currentTime">Loading...</div>
                         </div>
                         <button onclick="logout()" 
-                                class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg transition duration-300">
-                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                class="bg-red-100 hover:bg-red-200 text-red-700 px-3 sm:px-4 py-2 rounded-lg transition duration-300">
+                            <i class="fas fa-sign-out-alt sm:mr-2"></i><span class="hidden sm:inline">Logout</span>
                         </button>
                     </div>
                 </div>
             </div>
         </nav>
 
+        <!-- Backdrop gelap di belakang sidebar saat dibuka di layar kecil -->
+        <div id="adminSidebarBackdrop" onclick="toggleAdminSidebar()"></div>
+
         <!-- Sidebar & Main Content -->
         <div class="flex">
             <!-- Sidebar - UPDATED with Schedule Management -->
-            <div class="w-64 bg-white shadow-lg min-h-[calc(100vh-80px)]">
+            <div id="adminSidebarWrap" class="w-64 bg-white shadow-lg min-h-[calc(100vh-80px)]">
                 <div class="p-4">
-                    <h3 class="font-bold text-gray-700 mb-4">Menu Admin</h3>
+                    <div class="flex items-center justify-between mb-4 lg:hidden">
+                        <h3 class="font-bold text-gray-700">Menu Admin</h3>
+                        <button onclick="toggleAdminSidebar()" class="w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+                    </div>
+                    <h3 class="font-bold text-gray-700 mb-4 hidden lg:block">Menu Admin</h3>
                     <ul class="space-y-2">
                         <!-- Dashboard -->
                         <li>
@@ -242,7 +266,7 @@
             </div>
 
             <!-- Main Content -->
-            <div class="flex-1 p-6">
+            <div class="flex-1 p-4 sm:p-6 min-w-0">
                 <!-- Dashboard Section -->
                 <div id="dashboardSection">
                     <div class="mb-8">
@@ -717,7 +741,7 @@
         <!-- Announcement Modal -->
         <!-- Admission Documents Modal -->
         <div id="admissionDocsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 max-h-[85vh] overflow-y-auto">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-5 sm:p-8 max-h-[85vh] overflow-y-auto">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-xl font-bold text-gray-800">Berkas Pendaftaran</h3>
                     <button onclick="document.getElementById('admissionDocsModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
@@ -730,7 +754,7 @@
         </div>
 
         <div id="announcementModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6">Tambah Pengumuman</h3>
                 <form id="announcementForm" class="space-y-4">
                     <div>
@@ -772,7 +796,7 @@
 
         <!-- Teacher Modal -->
         <div id="teacherModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 max-h-[90vh] overflow-y-auto">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6" id="teacherModalTitle">Tambah Guru</h3>
                 <form id="teacherForm" class="space-y-4">
                     <div>
@@ -816,7 +840,7 @@
 
         <!-- Extracurricular Modal -->
         <div id="extracurricularModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6">Tambah Ekstrakurikuler</h3>
                 <form id="extracurricularForm" class="space-y-4">
                     <div>
@@ -883,7 +907,7 @@
 
     <!-- Add Student Modal (tanpa kamera - data saja) -->
     <div id="editStudentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8">
             <h3 class="text-2xl font-bold text-gray-800 mb-2">Edit Data Siswa</h3>
             <p class="text-sm text-gray-500 mb-6"><i class="fas fa-circle-info mr-1"></i>Lengkapi atau perbarui NIS siswa yang otomatis masuk dari persetujuan PPDB.</p>
             <form id="editStudentForm" class="space-y-4">
@@ -912,7 +936,7 @@
 
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8">
             <div class="text-center mb-6">
                 <div class="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-full mb-4">
                     <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
@@ -1060,8 +1084,18 @@
             }
         }
 
+        // Buka/tutup sidebar di layar kecil (di bawah 1024px)
+        function toggleAdminSidebar() {
+            document.getElementById('adminSidebarWrap').classList.toggle('open');
+            document.getElementById('adminSidebarBackdrop').classList.toggle('open');
+        }
+
         // Show section
         function showSection(section) {
+            // Tutup sidebar otomatis kalau lagi di layar kecil (setelah pilih menu)
+            document.getElementById('adminSidebarWrap').classList.remove('open');
+            document.getElementById('adminSidebarBackdrop').classList.remove('open');
+
             // Hide all sections
             document.getElementById('dashboardSection').classList.add('hidden');
             document.getElementById('studentsSection').classList.add('hidden');
