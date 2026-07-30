@@ -40,4 +40,9 @@ EXPOSE 5000
 
 ENV PYTHONUNBUFFERED=1
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "120", "app:app"]
+CMD sh -c "gunicorn \
+--bind 0.0.0.0:${PORT:-5000} \
+--workers 1 \
+--threads 2 \
+--timeout 120 \
+app:app"
