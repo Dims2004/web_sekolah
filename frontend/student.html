@@ -2,6 +2,18 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<script>
+(function () {
+    var API_BASE = 'https://websekolahbackend1-cbq3gx3i.b4a.run';
+    var originalFetch = window.fetch;
+    window.fetch = function (input, init) {
+        if (typeof input === 'string' && input.indexOf('/api/') === 0) {
+            input = API_BASE + input;
+        }
+        return originalFetch(input, init);
+    };
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portal Siswa - SMART SCHOOL</title>
 <script src="https://cdn.tailwindcss.com"></script>
