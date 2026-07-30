@@ -1,0 +1,8 @@
+**/__pycache__
+**/*.pyc
+.git
+.vscode
+*.md
+setup.bat
+run.bat
+setup.py

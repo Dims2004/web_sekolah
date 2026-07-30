@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pendaftaran Ekstrakurikuler - SMART SCHOOL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<div class="container mx-auto px-4 py-10">
+
+    <!-- ============ FORM SECTION ============ -->
+    <div id="formSection" class="max-w-xl mx-auto">
+        <div class="text-center mb-8">
+            <div id="ekskulIconWrap" class="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4">
+                <i class="fas fa-futbol text-2xl text-emerald-600"></i>
+            </div>
+            <h1 id="formTitle" class="text-2xl font-extrabold text-slate-800 mb-2">Pendaftaran Ekstrakurikuler</h1>
+            <p id="formSubtitle" class="text-slate-500 text-sm">Form ini khusus untuk mendaftar ekstrakurikuler, terpisah dari pendaftaran siswa baru.</p>
+        </div>
+
+        <!-- Kontak narahubung ekstrakurikuler ini -->
+        <div id="contactBox" class="hidden bg-white rounded-2xl shadow p-5 mb-6 flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div>
+                <div class="text-xs text-slate-400 uppercase font-semibold tracking-wide">Narahubung</div>
+                <div class="font-bold text-slate-800" id="contactName">-</div>
+                <div class="text-sm text-slate-500" id="contactPhone">-</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form id="ekskulForm" class="space-y-5">
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <input type="text" id="full_name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Nama lengkap siswa">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Kelas <span class="text-red-500">*</span></label>
+                    <select id="student_class" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="">Pilih Kelas</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">No. HP/WA Aktif <span class="text-red-500">*</span></label>
+                    <input type="tel" id="phone" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="08xxxxxxxxxx">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Catatan / Alasan Ikut <span class="text-gray-400 font-normal">(opsional)</span></label>
+                    <textarea id="note" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Contoh: sudah punya pengalaman latihan sebelumnya"></textarea>
+                </div>
+
+                <div id="ekskulError" class="hidden bg-red-50 text-red-700 p-3 rounded-lg text-sm"></div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 px-6 rounded-xl transition">
+                    <i class="fas fa-paper-plane mr-2"></i>Kirim Pendaftaran
+                </button>
+
+                <a href="ekstrakurikuler.html" class="block text-center text-sm text-slate-500 hover:text-emerald-700">
+                    <i class="fas fa-arrow-left mr-2"></i>Batal, kembali ke daftar ekstrakurikuler
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============ SUCCESS / BUKTI PENDAFTARAN SECTION ============ -->
+    <div id="successSection" class="hidden max-w-xl mx-auto">
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                <i class="fas fa-check text-2xl text-green-600"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-800 mb-2">Pendaftaran Terkirim!</h1>
+            <p class="text-slate-500">Simpan nomor pendaftaran di bawah ini sebagai bukti kamu sudah terdaftar.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <div class="bg-emerald-50 rounded-xl p-4 mb-6 text-center">
+                <div class="text-xs text-emerald-500 uppercase font-semibold tracking-wide">Nomor Pendaftaran</div>
+                <div id="proofRegNo" class="text-2xl font-extrabold text-emerald-700 mt-1">-</div>
+            </div>
+
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm mb-6">
+                <div><dt class="text-gray-500">Ekstrakurikuler</dt><dd class="font-semibold text-gray-800" id="proofEkskul">-</dd></div>
+                <div><dt class="text-gray-500">Nama</dt><dd class="font-semibold text-gray-800" id="proofName">-</dd></div>
+                <div><dt class="text-gray-500">Kelas</dt><dd class="font-semibold text-gray-800" id="proofClass">-</dd></div>
+                <div><dt class="text-gray-500">No. HP</dt><dd class="font-semibold text-gray-800" id="proofPhone">-</dd></div>
+            </dl>
+
+            <div class="border-t border-gray-100 pt-4">
+                <div class="text-xs text-gray-500 uppercase font-semibold tracking-wide mb-1">Narahubung</div>
+                <div class="font-semibold text-gray-800" id="proofContactName">-</div>
+                <div class="text-sm text-gray-500" id="proofContactPhone">-</div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-100 text-xs text-gray-400 flex justify-between">
+                <span>Dikirim: <span id="proofDate">-</span></span>
+                <span>SMART SCHOOL &bull; Pendaftaran Ekstrakurikuler</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 mt-6">
+            <button onclick="downloadPDF()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl">
+                <i class="fas fa-file-pdf mr-2"></i>Unduh PDF
+            </button>
+            <a href="ekstrakurikuler.html" class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl">
+                <i class="fas fa-list mr-2"></i>Ekstrakurikuler Lain
+            </a>
+            <a href="index.html" class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl">
+                <i class="fas fa-home mr-2"></i>Beranda
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const ekskulName = params.get('ekskul') || '';
+    let ekskulContact = { name: '', phone: '' };
+    let lastSubmission = null;
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        await loadClassOptions();
+
+        if (ekskulName) {
+            document.getElementById('formTitle').textContent = 'Pendaftaran Ekstrakurikuler: ' + ekskulName;
+            document.getElementById('formSubtitle').textContent = 'Lengkapi data di bawah untuk mendaftar ' + ekskulName + '.';
+            await loadContactInfo();
+        } else {
+            // Tidak ada ekskul dipilih, minta pilih dulu dari halaman daftar ekstrakurikuler
+            document.getElementById('formTitle').textContent = 'Pilih Ekstrakurikuler Dulu';
+            document.getElementById('formSubtitle').textContent = 'Silakan kembali ke daftar ekstrakurikuler dan klik "Daftar" pada salah satu kegiatan.';
+            document.getElementById('ekskulForm').classList.add('hidden');
+        }
+    });
+
+    async function loadClassOptions() {
+        const classSelect = document.getElementById('student_class');
+        try {
+            const response = await fetch('/api/schedule/classes');
+            const data = await response.json();
+            classSelect.innerHTML = '<option value="">Pilih Kelas</option>';
+            if (data.success) {
+                data.classes.forEach(function (cls) {
+                    const opt = document.createElement('option');
+                    opt.value = cls;
+                    opt.textContent = cls;
+                    classSelect.appendChild(opt);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading classes:', error);
+            classSelect.innerHTML = '<option value="">Gagal memuat kelas</option>';
+        }
+    }
+
+    async function loadContactInfo() {
+        try {
+            const response = await fetch('/api/extracurriculars');
+            const data = await response.json();
+            if (data.success) {
+                const found = data.extracurriculars.find(function (ex) { return ex.name === ekskulName; });
+                if (found && (found.contact_name || found.contact_phone)) {
+                    ekskulContact = { name: found.contact_name || '-', phone: found.contact_phone || '-' };
+                    document.getElementById('contactName').textContent = ekskulContact.name;
+                    document.getElementById('contactPhone').textContent = ekskulContact.phone;
+                    document.getElementById('contactBox').classList.remove('hidden');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading contact info:', error);
+        }
+    }
+
+    document.getElementById('ekskulForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const errorBox = document.getElementById('ekskulError');
+        errorBox.classList.add('hidden');
+
+        const payload = {
+            ekskul_name: ekskulName,
+            full_name: document.getElementById('full_name').value.trim(),
+            class: document.getElementById('student_class').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            note: document.getElementById('note').value.trim()
+        };
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengirim...';
+
+        try {
+            const response = await fetch('/api/ekskul/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                lastSubmission = Object.assign({}, payload, {
+                    registration_no: result.registration_no,
+                    contact_name: result.contact_name || ekskulContact.name,
+                    contact_phone: result.contact_phone || ekskulContact.phone,
+                    submitted_at: result.submitted_at
+                });
+                showProof(lastSubmission);
+            } else {
+                errorBox.textContent = result.error || 'Terjadi kesalahan saat mengirim pendaftaran';
+                errorBox.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Ekskul register error:', error);
+            errorBox.textContent = 'Tidak dapat terhubung ke server';
+            errorBox.classList.remove('hidden');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Kirim Pendaftaran';
+        }
+    });
+
+    function showProof(data) {
+        document.getElementById('formSection').classList.add('hidden');
+        document.getElementById('successSection').classList.remove('hidden');
+
+        document.getElementById('proofRegNo').textContent = data.registration_no;
+        document.getElementById('proofEkskul').textContent = data.ekskul_name;
+        document.getElementById('proofName').textContent = data.full_name;
+        document.getElementById('proofClass').textContent = data.class;
+        document.getElementById('proofPhone').textContent = data.phone;
+        document.getElementById('proofContactName').textContent = data.contact_name || '-';
+        document.getElementById('proofContactPhone').textContent = data.contact_phone || '-';
+        document.getElementById('proofDate').textContent = data.submitted_at;
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function downloadPDF() {
+        if (!lastSubmission) return;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+        const marginX = 48;
+        let y = 56;
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('SMART SCHOOL', marginX, y);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text('Bukti Pendaftaran Ekstrakurikuler', marginX, y + 16);
+
+        doc.setDrawColor(200);
+        y += 30;
+        doc.line(marginX, y, 547, y);
+
+        y += 28;
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text('Nomor Pendaftaran: ' + lastSubmission.registration_no, marginX, y);
+
+        y += 28;
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+
+        const rows = [
+            ['Ekstrakurikuler', lastSubmission.ekskul_name],
+            ['Nama Lengkap', lastSubmission.full_name],
+            ['Kelas', lastSubmission.class],
+            ['No. HP', lastSubmission.phone],
+            ['Catatan', lastSubmission.note || '-'],
+            ['Narahubung', (lastSubmission.contact_name || '-') + (lastSubmission.contact_phone ? ' (' + lastSubmission.contact_phone + ')' : '')],
+            ['Waktu Pendaftaran', lastSubmission.submitted_at]
+        ];
+
+        rows.forEach(function (row) {
+            const label = row[0];
+            const value = String(row[1] || '-');
+            const lines = doc.splitTextToSize(value, 300);
+            doc.setFont(undefined, 'bold');
+            doc.text(label, marginX, y);
+            doc.setFont(undefined, 'normal');
+            doc.text(lines, marginX + 150, y);
+            y += Math.max(18, lines.length * 14);
+        });
+
+        y += 20;
+        doc.setDrawColor(200);
+        doc.line(marginX, y, 547, y);
+        y += 20;
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text('Dokumen ini adalah bukti bahwa pendaftaran ekstrakurikuler telah diterima oleh sistem SMART SCHOOL.', marginX, y);
+        doc.text('Hubungi narahubung di atas untuk info jadwal latihan dan kegiatan selanjutnya.', marginX, y + 14);
+
+        doc.save('bukti-ekskul-' + lastSubmission.registration_no + '.pdf');
+    }
+</script>
+</body>
+</html>

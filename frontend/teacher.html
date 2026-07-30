@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Guru - SMART SCHOOL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root{ --brand-1:#0f766e; --brand-2:#0ea5e9; }
+    *{font-family:'Plus Jakarta Sans', sans-serif;}
+    body{background:#f4f5fb;}
+    .glass-card{background:#fff;border-radius:1.25rem;box-shadow:0 10px 30px rgba(15,23,42,.06);border:1px solid rgba(15,23,42,.04);}
+    .icon-tile{width:3rem;height:3rem;border-radius:.9rem;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="loginSection" class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style="background:linear-gradient(135deg,#0f766e,#0ea5e9);">
+                <i class="fas fa-chalkboard-teacher text-2xl text-white"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-800 mb-2">Portal Guru</h1>
+            <p class="text-slate-500 text-sm">Login untuk mengelola siswa di kelas perwalian Anda.</p>
+        </div>
+
+        <div class="glass-card p-8">
+            <form id="teacherLoginForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Username</label>
+                    <input type="text" id="usernameInput" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="passwordInput" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+                <div id="loginError" class="hidden bg-red-50 text-red-700 p-3 rounded-lg text-sm"></div>
+                <button type="submit" id="loginBtn" class="w-full text-white font-semibold py-3 px-6 rounded-xl" style="background:linear-gradient(135deg,#0f766e,#0ea5e9);">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Masuk
+                </button>
+            </form>
+            <p class="text-xs text-gray-400 mt-4 text-center">Belum punya akun guru? Hubungi admin sekolah untuk dibuatkan akun.</p>
+        </div>
+
+        <a href="index.html" class="block text-center text-sm text-slate-500 hover:text-teal-700 mt-6"><i class="fas fa-arrow-left mr-2"></i>Kembali ke Beranda</a>
+    </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="dashboardSection" class="hidden">
+    <nav class="sticky top-0 z-30 bg-white border-b border-slate-100">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white" style="background:linear-gradient(135deg,#0f766e,#0ea5e9);">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div>
+                    <div class="font-extrabold text-slate-800 leading-none text-sm">Portal Guru</div>
+                    <div class="text-xs text-slate-500">SMART SCHOOL</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="hidden sm:inline-flex items-center bg-teal-50 text-teal-700 text-xs font-bold px-3 py-2 rounded-full">
+                    <i class="fas fa-id-badge mr-2"></i>GRUP: GURU
+                </span>
+                <div class="relative">
+                    <button onclick="toggleNotifDropdown()" id="notifBtn" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center relative text-slate-600">
+                        <i class="fas fa-bell"></i>
+                        <span id="notifDot" class="hidden absolute top-2 right-2.5 w-2 h-2 bg-amber-400 rounded-full"></span>
+                    </button>
+                    <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50">
+                        <div class="px-4 py-3 border-b border-slate-100 font-bold text-slate-800 text-sm">Pengumuman</div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto">
+                            <p class="text-sm text-slate-400 text-center py-6">Memuat...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right hidden sm:block">
+                    <div id="teacherNameLabel" class="text-sm font-semibold text-slate-800">-</div>
+                    <div id="teacherSubjectLabel" class="text-xs text-slate-500">-</div>
+                </div>
+                <button onclick="teacherLogout()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fas fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800">Selamat Datang, <span id="teacherGreetName">Guru</span> 👋</h1>
+            <p class="text-slate-500 mt-1" id="homeroomLabel">Memuat data kelas perwalian...</p>
+        </div>
+
+        <!-- Banner & Pengumuman -->
+        <div id="announcementSection" class="hidden mb-8">
+            <div class="glass-card overflow-hidden relative mb-4" id="bannerWrap">
+                <div class="flex transition-transform duration-500" id="bannerTrack"></div>
+                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2" id="bannerDots"></div>
+            </div>
+            <div id="newsCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- Jadwal Mengajar (kalender mingguan, berlaku untuk semua guru) -->
+        <div class="glass-card p-6 mb-8">
+            <h2 class="font-bold text-slate-800 mb-4 flex items-center"><i class="fas fa-calendar-days text-teal-600 mr-2"></i>Jadwal Mengajar Anda</h2>
+            <div id="scheduleCalendar" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <p class="text-sm text-slate-400 col-span-full text-center py-6">Memuat jadwal mengajar...</p>
+            </div>
+        </div>
+
+        <!-- No homeroom notice -->
+        <div id="noHomeroomNotice" class="hidden glass-card p-6 mb-8 flex items-start gap-4 border-l-4 border-amber-400">
+            <i class="fas fa-triangle-exclamation text-amber-500 text-xl mt-1"></i>
+            <div>
+                <div class="font-bold text-slate-800">Anda belum ditetapkan sebagai wali kelas</div>
+                <p class="text-sm text-slate-500 mt-1">Hubungi admin sekolah untuk menetapkan kelas perwalian Anda. Tanpa kelas perwalian, Anda tidak bisa menambahkan siswa baru.</p>
+            </div>
+        </div>
+
+        <div id="homeroomContent" class="hidden">
+            <!-- Stat + action -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+                <div class="glass-card p-6 sm:col-span-2">
+                    <div class="flex items-center gap-4">
+                        <div class="icon-tile text-white" style="background:linear-gradient(135deg,#0f766e,#0ea5e9);"><i class="fas fa-users"></i></div>
+                        <div>
+                            <div class="text-xs text-slate-500 uppercase font-semibold tracking-wide">Wali Kelas</div>
+                            <div class="text-xl font-extrabold text-slate-800" id="homeroomClassBig">-</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-baseline gap-2">
+                        <span class="text-3xl font-extrabold text-slate-800" id="studentCount">0</span>
+                        <span class="text-sm text-slate-500">siswa terdaftar di kelas ini</span>
+                    </div>
+                </div>
+                <button onclick="openAddStudentModal()" class="glass-card p-6 text-left hover:shadow-lg transition flex flex-col justify-between">
+                    <div class="icon-tile text-white mb-3" style="background:linear-gradient(135deg,#16a34a,#0d9488);"><i class="fas fa-user-plus"></i></div>
+                    <div>
+                        <div class="font-bold text-slate-800">Tambah Siswa</div>
+                        <div class="text-xs text-slate-500">Daftarkan wajah siswa baru di kelas Anda</div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Student list -->
+            <div class="glass-card p-6">
+                <h2 class="font-bold text-slate-800 mb-4 flex items-center"><i class="fas fa-list text-teal-600 mr-2"></i>Daftar Siswa Kelas Anda</h2>
+                <div id="studentsList" class="space-y-2">
+                    <p class="text-sm text-slate-400 text-center py-6">Memuat data siswa...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kelas yang Diajar (rekap Hadir/Telat/Alfa/Sakit/Izin, semua guru) -->
+        <div class="glass-card p-6 mt-8">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                <h2 class="font-bold text-slate-800 flex items-center"><i class="fas fa-chart-column text-teal-600 mr-2"></i>Rekap Kehadiran Kelas yang Diajar</h2>
+                <select id="rosterClassPicker" class="px-4 py-2 border border-gray-300 rounded-xl text-sm">
+                    <option value="">Pilih kelas...</option>
+                </select>
+            </div>
+            <div id="rosterTableWrap" class="overflow-x-auto">
+                <p class="text-sm text-slate-400 text-center py-8">Pilih kelas untuk melihat rekap kehadiran bulan ini.</p>
+            </div>
+        </div>
+
+        <!-- Pengajuan Izin dari siswa -->
+        <div class="glass-card p-6 mt-8">
+            <h2 class="font-bold text-slate-800 mb-5 flex items-center"><i class="fas fa-file-circle-check text-teal-600 mr-2"></i>Pengajuan Izin / Sakit</h2>
+            <div id="leaveRequestsList" class="space-y-3">
+                <p class="text-sm text-slate-400 text-center py-6">Memuat pengajuan izin...</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ============ EDIT STATUS MODAL ============ -->
+<div id="editStatusModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+    <div class="glass-card max-w-sm w-full p-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-slate-800">Koreksi Status</h3>
+            <button onclick="closeEditStatusModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+        <p class="text-sm text-slate-500 mb-4"><strong id="editStatusStudentName">-</strong></p>
+        <form id="editStatusForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-medium mb-2">Tanggal</label>
+                <input type="date" id="editStatusDate" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-medium mb-2">Status</label>
+                <select id="editStatusValue" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl">
+                    <option value="hadir">Hadir</option>
+                    <option value="telat">Telat</option>
+                    <option value="alfa">Alfa</option>
+                    <option value="sakit">Sakit</option>
+                    <option value="izin">Izin</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-medium mb-2">Catatan <span class="text-gray-400 font-normal">(opsional)</span></label>
+                <input type="text" id="editStatusNote" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl">
+            </div>
+            <div id="editStatusMsg" class="hidden text-sm p-3 rounded-lg"></div>
+            <button type="submit" class="w-full text-white font-semibold py-3 rounded-xl" style="background:linear-gradient(135deg,#0f766e,#0ea5e9);">
+                <i class="fas fa-save mr-2"></i>Simpan
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ============ ADD STUDENT MODAL ============ -->
+<div id="addStudentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+    <div class="glass-card max-w-md w-full p-8 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-slate-800">Tambah Siswa Baru</h3>
+            <button onclick="closeAddStudentModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="addStudentForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-medium mb-2">NIS</label>
+                <input type="text" id="studentNis" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                <p id="nisCheckMsg" class="hidden text-xs mt-1.5 p-2 rounded-lg bg-amber-50 text-amber-700"></p>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-medium mb-2">Nama Lengkap</label>
+                <input type="text" id="studentName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-medium mb-2">Kelas</label>
+                <input type="text" id="studentClass" disabled class="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl text-gray-500">
+                <p class="text-xs text-gray-400 mt-1">Otomatis diisi sesuai kelas perwalian Anda.</p>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 text-sm font-medium mb-2">Foto Wajah</label>
+                <div id="cameraBox" class="mb-3">
+                    <video id="studentVideo" autoplay playsinline class="w-full rounded-xl bg-gray-900" style="max-height:220px;transform:scaleX(-1);"></video>
+                    <canvas id="studentCanvas" class="hidden"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" id="captureBtn" onclick="capturePhoto()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm">
+                        <i class="fas fa-camera mr-2"></i>Ambil Foto
+                    </button>
+                    <button type="button" id="retakeBtn" onclick="retakePhoto()" class="hidden bg-amber-100 hover:bg-amber-200 text-amber-700 font-semibold py-2.5 rounded-xl text-sm">
+                        <i class="fas fa-rotate mr-2"></i>Ambil Ulang
+                    </button>
+                </div>
+                <img id="capturedPreview" class="hidden mt-3 w-full rounded-xl border border-gray-200" style="max-height:220px;object-fit:cover;">
+            </div>
+
+            <div id="addStudentError" class="hidden bg-red-50 text-red-700 p-3 rounded-lg text-sm"></div>
+            <div id="addStudentSuccess" class="hidden bg-green-50 text-green-700 p-3 rounded-lg text-sm"></div>
+
+            <button type="submit" id="submitStudentBtn" class="w-full text-white font-semibold py-3 rounded-xl" style="background:linear-gradient(135deg,#0f766e,#0ea5e9);">
+                <i class="fas fa-save mr-2"></i>Simpan Siswa
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Take Photo Modal (untuk siswa yang datanya sudah ada tapi belum ada foto) -->
+<div id="takePhotoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+    <div class="glass-card max-w-md w-full p-8">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xl font-bold text-slate-800">Ambil Foto Wajah</h3>
+            <button onclick="closeTakePhotoModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+        <p class="text-sm text-slate-500 mb-4">Untuk: <strong id="takePhotoStudentName">-</strong> (NIS: <span id="takePhotoStudentNis">-</span>)</p>
+
+        <div id="takePhotoCameraBox" class="mb-3">
+            <video id="takePhotoVideo" autoplay playsinline class="w-full rounded-xl bg-gray-900" style="max-height:220px;transform:scaleX(-1);"></video>
+            <canvas id="takePhotoCanvas" class="hidden"></canvas>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-3">
+            <button type="button" id="takePhotoCaptureBtn" onclick="captureExistingPhoto()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm">
+                <i class="fas fa-camera mr-2"></i>Ambil Foto
+            </button>
+            <button type="button" id="takePhotoRetakeBtn" onclick="retakeExistingPhoto()" class="hidden bg-amber-100 hover:bg-amber-200 text-amber-700 font-semibold py-2.5 rounded-xl text-sm">
+                <i class="fas fa-rotate mr-2"></i>Ambil Ulang
+            </button>
+        </div>
+        <img id="takePhotoPreview" class="hidden mb-3 w-full rounded-xl border border-gray-200" style="max-height:220px;object-fit:cover;">
+
+        <div id="takePhotoError" class="hidden bg-red-50 text-red-700 p-3 rounded-lg text-sm mb-3"></div>
+        <div id="takePhotoSuccess" class="hidden bg-green-50 text-green-700 p-3 rounded-lg text-sm mb-3"></div>
+
+        <button type="button" id="submitTakePhotoBtn" onclick="submitExistingPhoto()" class="w-full text-white font-semibold py-3 rounded-xl" style="background:linear-gradient(135deg,#0f766e,#0ea5e9);">
+            <i class="fas fa-save mr-2"></i>Simpan Foto
+        </button>
+    </div>
+</div>
+
+<!-- ============ DOCTOR NOTE PREVIEW MODAL ============ -->
+<div id="doctorNoteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+    <div class="glass-card max-w-lg w-full p-8">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-slate-800">Surat Keterangan Dokter</h3>
+            <button onclick="closeDoctorNoteModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="doctorNoteBody" class="max-h-[70vh] overflow-y-auto rounded-xl bg-gray-50 p-2 text-center">
+            <p class="text-sm text-slate-400 py-10">Memuat lampiran...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let teacherToken = null;
+    let currentTeacher = null;
+    let studentStream = null;
+    let capturedImage = '';
+
+    // ---------- Login ----------
+    document.getElementById('teacherLoginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const username = document.getElementById('usernameInput').value.trim();
+        const password = document.getElementById('passwordInput').value;
+        const errorBox = document.getElementById('loginError');
+        errorBox.classList.add('hidden');
+
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
+
+        try {
+            const response = await fetch('/api/schedule/teachers/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                teacherToken = result.token;
+                currentTeacher = result.teacher;
+                sessionStorage.setItem('teacherToken', teacherToken);
+                showDashboard();
+            } else {
+                errorBox.textContent = result.error || 'Username atau password salah';
+                errorBox.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Teacher login error:', error);
+            errorBox.textContent = 'Tidak dapat terhubung ke server';
+            errorBox.classList.remove('hidden');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Masuk';
+        }
+    });
+
+    function teacherLogout() {
+        sessionStorage.removeItem('teacherToken');
+        teacherToken = null;
+        currentTeacher = null;
+        document.getElementById('dashboardSection').classList.add('hidden');
+        document.getElementById('loginSection').classList.remove('hidden');
+    }
+
+    // ---------- Dashboard ----------
+    async function showDashboard() {
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        await loadHomeroomData();
+        await loadTeacherSchedule();
+        await loadAnnouncements();
+        await loadTaughtClasses();
+        await loadLeaveRequests();
+    }
+
+    // ---------- Rekap kehadiran kelas yang diajar ----------
+    async function loadTaughtClasses() {
+        try {
+            const response = await fetch('/api/schedule/teachers/me/classes', {
+                headers: { 'Authorization': 'Bearer ' + teacherToken }
+            });
+            const data = await response.json();
+            if (!data.success) return;
+
+            const picker = document.getElementById('rosterClassPicker');
+            picker.innerHTML = '<option value="">Pilih kelas...</option>';
+            data.classes.forEach(function (cls) {
+                const opt = document.createElement('option');
+                opt.value = cls;
+                opt.textContent = cls;
+                picker.appendChild(opt);
+            });
+            picker.addEventListener('change', function (e) {
+                if (e.target.value) loadClassRoster(e.target.value);
+                else document.getElementById('rosterTableWrap').innerHTML = '<p class="text-sm text-slate-400 text-center py-8">Pilih kelas untuk melihat rekap kehadiran bulan ini.</p>';
+            });
+        } catch (error) {
+            console.error('Error loading taught classes:', error);
+        }
+    }
+
+    let currentRosterClass = '';
+
+    async function loadClassRoster(className) {
+        currentRosterClass = className;
+        const wrap = document.getElementById('rosterTableWrap');
+        wrap.innerHTML = '<p class="text-sm text-slate-400 text-center py-8"><i class="fas fa-spinner fa-spin mr-2"></i>Memuat rekap...</p>';
+
+        try {
+            const response = await fetch('/api/schedule/teachers/me/class-roster?class=' + encodeURIComponent(className), {
+                headers: { 'Authorization': 'Bearer ' + teacherToken }
+            });
+            const data = await response.json();
+            if (!data.success) {
+                wrap.innerHTML = '<p class="text-sm text-red-400 text-center py-8">' + (data.error || 'Gagal memuat rekap') + '</p>';
+                return;
+            }
+            if (data.roster.length === 0) {
+                wrap.innerHTML = '<p class="text-sm text-slate-400 text-center py-8">Belum ada siswa di kelas ini.</p>';
+                return;
+            }
+
+            let html = '<table class="w-full text-sm"><thead><tr class="bg-gray-50 text-left">' +
+                '<th class="py-2 px-3">Nama Siswa</th><th class="py-2 px-3">NIS</th>' +
+                '<th class="py-2 px-3 text-center">Hadir</th><th class="py-2 px-3 text-center">Telat</th>' +
+                '<th class="py-2 px-3 text-center">Alfa</th><th class="py-2 px-3 text-center">Sakit</th>' +
+                '<th class="py-2 px-3 text-center">Izin</th><th class="py-2 px-3">Aksi</th></tr></thead><tbody>';
+
+            data.roster.forEach(function (s) {
+                html += '<tr class="border-b border-gray-50 hover:bg-gray-50">' +
+                    '<td class="py-2 px-3 font-medium text-slate-800">' + s.name + '</td>' +
+                    '<td class="py-2 px-3 text-slate-500">' + s.nis + '</td>' +
+                    '<td class="py-2 px-3 text-center text-green-600 font-semibold">' + s.hadir + '</td>' +
+                    '<td class="py-2 px-3 text-center text-amber-600 font-semibold">' + s.telat + '</td>' +
+                    '<td class="py-2 px-3 text-center text-red-600 font-semibold">' + s.alfa + '</td>' +
+                    '<td class="py-2 px-3 text-center text-sky-600 font-semibold">' + s.sakit + '</td>' +
+                    '<td class="py-2 px-3 text-center text-violet-600 font-semibold">' + s.izin + '</td>' +
+                    '<td class="py-2 px-3">' +
+                    '<button onclick="openEditStatusModal(\'' + s.nis + '\', \'' + s.name.replace(/'/g, "\\'") + '\')" class="text-xs bg-teal-50 hover:bg-teal-100 text-teal-700 px-2.5 py-1.5 rounded-lg font-semibold">' +
+                    '<i class="fas fa-pen mr-1"></i>Koreksi</button></td></tr>';
+            });
+            html += '</tbody></table>';
+            wrap.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading class roster:', error);
+            wrap.innerHTML = '<p class="text-sm text-red-400 text-center py-8">Tidak dapat terhubung ke server.</p>';
+        }
+    }
+
+    let editStatusTargetNis = '';
+
+    function openEditStatusModal(nis, name) {
+        editStatusTargetNis = nis;
+        document.getElementById('editStatusStudentName').textContent = name + ' (NIS: ' + nis + ')';
+        document.getElementById('editStatusDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('editStatusValue').value = 'hadir';
+        document.getElementById('editStatusNote').value = '';
+        document.getElementById('editStatusMsg').classList.add('hidden');
+        document.getElementById('editStatusModal').classList.remove('hidden');
+    }
+
+    function closeEditStatusModal() {
+        document.getElementById('editStatusModal').classList.add('hidden');
+    }
+
+    document.getElementById('editStatusForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const msgBox = document.getElementById('editStatusMsg');
+        msgBox.classList.add('hidden');
+
+        const payload = {
+            nis: editStatusTargetNis,
+            date: document.getElementById('editStatusDate').value,
+            status: document.getElementById('editStatusValue').value,
+            note: document.getElementById('editStatusNote').value.trim()
+        };
+
+        try {
+            const response = await fetch('/api/schedule/attendance/override', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + teacherToken
+                },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            msgBox.classList.remove('hidden');
+            if (result.success) {
+                msgBox.className = 'text-sm p-3 rounded-lg bg-green-50 text-green-700';
+                msgBox.textContent = 'Status berhasil disimpan.';
+                if (currentRosterClass) loadClassRoster(currentRosterClass);
+                setTimeout(closeEditStatusModal, 900);
+            } else {
+                msgBox.className = 'text-sm p-3 rounded-lg bg-red-50 text-red-700';
+                msgBox.textContent = result.error || 'Gagal menyimpan status.';
+            }
+        } catch (error) {
+            console.error('Error saving status override:', error);
+            msgBox.classList.remove('hidden');
+            msgBox.className = 'text-sm p-3 rounded-lg bg-red-50 text-red-700';
+            msgBox.textContent = 'Tidak dapat terhubung ke server.';
+        }
+    });
+
+    // ---------- Pengajuan Izin ----------
+    async function loadLeaveRequests() {
+        const list = document.getElementById('leaveRequestsList');
+        try {
+            const response = await fetch('/api/schedule/teachers/me/leave-requests', {
+                headers: { 'Authorization': 'Bearer ' + teacherToken }
+            });
+            const data = await response.json();
+            if (!data.success || data.requests.length === 0) {
+                list.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Belum ada pengajuan izin.</p>';
+                return;
+            }
+
+            list.innerHTML = data.requests.map(function (r) {
+                const typeLabel = r.leave_type === 'sakit' ? 'Sakit' : 'Izin';
+                const typeColor = r.leave_type === 'sakit' ? 'bg-sky-50 text-sky-700' : 'bg-violet-50 text-violet-700';
+                let statusBadge = '<span class="bg-amber-50 text-amber-700 text-xs font-semibold px-2 py-1 rounded-full">Menunggu</span>';
+                if (r.status === 'disetujui') statusBadge = '<span class="bg-green-50 text-green-700 text-xs font-semibold px-2 py-1 rounded-full">Disetujui</span>';
+                if (r.status === 'ditolak') statusBadge = '<span class="bg-red-50 text-red-700 text-xs font-semibold px-2 py-1 rounded-full">Ditolak</span>';
+
+                const noteBtn = r.has_doctor_note
+                    ? '<button onclick="viewDoctorNote(' + r.id + ')" class="text-xs bg-sky-100 hover:bg-sky-200 text-sky-700 px-3 py-1.5 rounded-lg font-semibold"><i class="fas fa-file-medical mr-1"></i>Lihat Surat Dokter</button>'
+                    : (r.leave_type === 'sakit' ? '<span class="text-xs text-red-500"><i class="fas fa-triangle-exclamation mr-1"></i>Tanpa surat dokter</span>' : '');
+
+                const actions = r.status === 'pending'
+                    ? '<div class="flex flex-wrap gap-2 mt-2">' +
+                      noteBtn +
+                      '<button onclick="reviewLeaveRequest(' + r.id + ', \'approve\')" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-semibold"><i class="fas fa-check mr-1"></i>Setujui</button>' +
+                      '<button onclick="reviewLeaveRequest(' + r.id + ', \'reject\')" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-lg font-semibold"><i class="fas fa-xmark mr-1"></i>Tolak</button>' +
+                      '</div>' : (noteBtn ? '<div class="flex flex-wrap gap-2 mt-2">' + noteBtn + '</div>' : '');
+
+                return '<div class="bg-gray-50 rounded-xl p-4">' +
+                    '<div class="flex items-start justify-between gap-3">' +
+                    '<div>' +
+                    '<div class="flex items-center gap-2 mb-1">' +
+                    '<span class="text-xs font-semibold px-2 py-1 rounded-full ' + typeColor + '">' + typeLabel + '</span>' +
+                    statusBadge +
+                    '</div>' +
+                    '<div class="font-semibold text-slate-800 text-sm">' + r.student_name + ' &bull; ' + r.class + '</div>' +
+                    '<div class="text-xs text-slate-500 mt-0.5">Tanggal: ' + r.leave_date + '</div>' +
+                    '<div class="text-xs text-slate-500 mt-1">' + r.reason + '</div>' +
+                    '</div></div>' + actions + '</div>';
+            }).join('');
+        } catch (error) {
+            console.error('Error loading leave requests:', error);
+            list.innerHTML = '<p class="text-sm text-red-400 text-center py-6">Gagal memuat data pengajuan izin.</p>';
+        }
+    }
+
+    async function viewDoctorNote(id) {
+        const modal = document.getElementById('doctorNoteModal');
+        const body = document.getElementById('doctorNoteBody');
+        body.innerHTML = '<p class="text-sm text-slate-400 py-10">Memuat lampiran...</p>';
+        modal.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/leave-requests/' + id + '/doctor-note', {
+                headers: { 'Authorization': 'Bearer ' + teacherToken }
+            });
+            const result = await response.json();
+            if (!result.success) {
+                body.innerHTML = '<p class="text-sm text-red-500 py-10">' + (result.error || 'Gagal memuat lampiran') + '</p>';
+                return;
+            }
+
+            const dataUrl = result.doctor_note;
+            if (dataUrl.startsWith('data:application/pdf')) {
+                body.innerHTML = '<iframe src="' + dataUrl + '" class="w-full" style="height:65vh;border:0;"></iframe>';
+            } else {
+                body.innerHTML = '<img src="' + dataUrl + '" class="max-w-full rounded-lg mx-auto">';
+            }
+        } catch (error) {
+            console.error('Error loading doctor note:', error);
+            body.innerHTML = '<p class="text-sm text-red-500 py-10">Tidak dapat terhubung ke server.</p>';
+        }
+    }
+
+    function closeDoctorNoteModal() {
+        document.getElementById('doctorNoteModal').classList.add('hidden');
+    }
+
+    async function reviewLeaveRequest(id, action) {
+        if (!confirm(action === 'approve' ? 'Setujui pengajuan ini?' : 'Tolak pengajuan ini?')) return;
+        try {
+            const response = await fetch('/api/schedule/leave-requests/' + id + '/review', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + teacherToken
+                },
+                body: JSON.stringify({ action })
+            });
+            const result = await response.json();
+            if (result.success) {
+                loadLeaveRequests();
+                if (currentRosterClass) loadClassRoster(currentRosterClass);
+            } else {
+                alert(result.error || 'Gagal memproses pengajuan');
+            }
+        } catch (error) {
+            console.error('Error reviewing leave request:', error);
+            alert('Tidak dapat terhubung ke server');
+        }
+    }
+
+    // ---------- Pengumuman (banner + kartu berita + notifikasi) ----------
+    let announcementsData = [];
+    let bannerIndex = 0;
+
+    async function loadAnnouncements() {
+        try {
+            const response = await fetch('/api/announcements?audience=guru');
+            const data = await response.json();
+            announcementsData = (data.success && data.announcements) || [];
+            renderNotifDropdown();
+            renderBannerAndNews();
+        } catch (error) {
+            console.error('Error loading announcements:', error);
+        }
+    }
+
+    function renderNotifDropdown() {
+        const list = document.getElementById('notifList');
+        const dot = document.getElementById('notifDot');
+        if (announcementsData.length === 0) {
+            list.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Belum ada pengumuman</p>';
+            dot.classList.add('hidden');
+            return;
+        }
+        dot.classList.remove('hidden');
+        list.innerHTML = announcementsData.slice(0, 8).map(function (a) {
+            return '<div class="px-4 py-3 border-b border-slate-50 hover:bg-slate-50">' +
+                '<div class="font-semibold text-slate-800 text-sm">' + a.title + '</div>' +
+                '<div class="text-xs text-slate-500 mt-0.5">' + (a.description || '') + '</div>' +
+                '<div class="text-[11px] text-slate-400 mt-1">' + new Date(a.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>' +
+                '</div>';
+        }).join('');
+    }
+
+    function toggleNotifDropdown() {
+        document.getElementById('notifDropdown').classList.toggle('hidden');
+    }
+    document.addEventListener('click', function (e) {
+        const dropdown = document.getElementById('notifDropdown');
+        const btn = document.getElementById('notifBtn');
+        if (!dropdown || dropdown.classList.contains('hidden')) return;
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) dropdown.classList.add('hidden');
+    });
+
+    function renderBannerAndNews() {
+        const section = document.getElementById('announcementSection');
+        const track = document.getElementById('bannerTrack');
+        const dots = document.getElementById('bannerDots');
+        const grid = document.getElementById('newsCardsGrid');
+
+        if (announcementsData.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+        section.classList.remove('hidden');
+
+        track.innerHTML = announcementsData.map(function (a) {
+            const bg = a.image ? 'background-image:url(\'' + a.image + '\');background-size:cover;background-position:center;' : 'background:linear-gradient(135deg,#0f766e,#0ea5e9);';
+            return '<div class="w-full flex-shrink-0 relative" style="min-width:100%;">' +
+                '<div class="h-48 sm:h-56 relative" style="' + bg + '">' +
+                '<div class="absolute inset-0" style="background:linear-gradient(to top, rgba(0,0,0,.7), rgba(0,0,0,.1) 60%);"></div>' +
+                '<div class="absolute bottom-0 left-0 right-0 p-5 text-white">' +
+                '<h3 class="text-lg font-extrabold mb-1">' + a.title + '</h3>' +
+                '<p class="text-white/80 text-sm">' + (a.description || '') + '</p>' +
+                '</div></div></div>';
+        }).join('');
+
+        dots.innerHTML = '';
+        announcementsData.forEach(function (_, i) {
+            const dot = document.createElement('div');
+            dot.className = 'w-2 h-2 rounded-full ' + (i === 0 ? 'bg-white' : 'bg-white/40');
+            dot.onclick = function () { setBannerSlide(i); };
+            dots.appendChild(dot);
+        });
+        bannerIndex = 0;
+        setBannerSlide(0);
+
+        grid.innerHTML = announcementsData.slice(0, 6).map(function (a) {
+            const content = '<div class="font-bold text-slate-800 text-sm mb-1">' + a.title + '</div>' +
+                '<p class="text-xs text-slate-500 line-clamp-2">' + (a.description || '') + '</p>' +
+                '<div class="text-[11px] text-slate-400 mt-2">' + new Date(a.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>';
+            return a.link_url
+                ? '<a href="' + a.link_url + '" class="glass-card p-4 block hover:shadow-lg transition">' + content + '</a>'
+                : '<div class="glass-card p-4">' + content + '</div>';
+        }).join('');
+    }
+
+    function setBannerSlide(i) {
+        const track = document.getElementById('bannerTrack');
+        const dots = document.getElementById('bannerDots');
+        bannerIndex = (i + announcementsData.length) % announcementsData.length;
+        track.style.transform = 'translateX(-' + (bannerIndex * 100) + '%)';
+        Array.from(dots.children).forEach(function (d, idx) {
+            d.className = 'w-2 h-2 rounded-full ' + (idx === bannerIndex ? 'bg-white' : 'bg-white/40');
+        });
+    }
+    setInterval(function () { if (announcementsData.length > 1) setBannerSlide(bannerIndex + 1); }, 6000);
+
+    // ---------- Jadwal Mengajar (kalender mingguan, semua kelas yang diajar) ----------
+    const DAY_ORDER = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+    const DAY_LABELS_ID = { senin: 'Senin', selasa: 'Selasa', rabu: 'Rabu', kamis: 'Kamis', jumat: 'Jumat', sabtu: 'Sabtu' };
+
+    function isScheduleOngoing(timeStr) {
+        if (!timeStr) return false;
+        const parts = timeStr.split('-').map(s => s.trim());
+        const now = new Date();
+        function toDate(hm) {
+            const m = hm.match(/(\d{1,2})[:.](\d{2})/);
+            if (!m) return null;
+            const d = new Date(now);
+            d.setHours(parseInt(m[1], 10), parseInt(m[2], 10), 0, 0);
+            return d;
+        }
+        const start = toDate(parts[0]);
+        const end = parts[1] ? toDate(parts[1]) : null;
+        if (!start) return false;
+        const todayName = DAY_ORDER[(now.getDay() + 6) % 7] || null; // Minggu(0) tidak dipakai di jadwal
+        return end ? (now >= start && now <= end) : false;
+    }
+
+    async function loadTeacherSchedule() {
+        const container = document.getElementById('scheduleCalendar');
+        try {
+            const response = await fetch('/api/schedule/teachers/me/schedule', {
+                headers: { 'Authorization': 'Bearer ' + teacherToken }
+            });
+            const data = await response.json();
+
+            if (!data.success) {
+                container.innerHTML = '<p class="text-sm text-red-400 col-span-full text-center py-6">Gagal memuat jadwal mengajar.</p>';
+                return;
+            }
+
+            if (!data.schedule || data.schedule.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-400 col-span-full text-center py-6">Anda belum punya jadwal mengajar. Hubungi admin untuk menambahkan jadwal.</p>';
+                return;
+            }
+
+            const now = new Date();
+            const todayIndex = now.getDay(); // 0=Minggu ... 6=Sabtu
+            const todayName = DAY_ORDER[todayIndex - 1] || null; // senin=index0 utk getDay()=1
+
+            container.innerHTML = DAY_ORDER.map(function (day) {
+                const items = data.schedule
+                    .filter(function (s) { return s.day === day; })
+                    .sort(function (a, b) { return a.time.localeCompare(b.time); });
+
+                const isToday = day === todayName;
+
+                const itemsHtml = items.length > 0
+                    ? items.map(function (item) {
+                        const ongoing = isToday && isScheduleOngoing(item.time);
+                        return '<div class="rounded-lg p-2.5 mb-2 text-xs ' + (ongoing ? 'bg-amber-50 border border-amber-300' : 'bg-slate-50') + '">' +
+                            '<div class="font-semibold text-slate-700">' + item.time + '</div>' +
+                            '<div class="text-slate-800 font-bold">' + item.subject + '</div>' +
+                            '<div class="text-slate-500">Kelas ' + item.class_name + ' &bull; ' + item.room + '</div>' +
+                            (ongoing ? '<div class="text-amber-600 font-semibold mt-1"><i class="fas fa-circle-dot mr-1"></i>Berlangsung</div>' : '') +
+                            '</div>';
+                    }).join('')
+                    : '<p class="text-xs text-slate-300 text-center py-4">Tidak ada jadwal</p>';
+
+                return '<div class="rounded-xl border ' + (isToday ? 'border-teal-300 bg-teal-50/40' : 'border-slate-100') + ' p-3">' +
+                    '<div class="text-xs font-bold uppercase tracking-wide mb-2 ' + (isToday ? 'text-teal-700' : 'text-slate-500') + '">' + DAY_LABELS_ID[day] + (isToday ? ' &bull; Hari Ini' : '') + '</div>' +
+                    itemsHtml +
+                    '</div>';
+            }).join('');
+        } catch (error) {
+            console.error('Error loading teacher schedule:', error);
+            container.innerHTML = '<p class="text-sm text-red-400 col-span-full text-center py-6">Tidak dapat terhubung ke server.</p>';
+        }
+    }
+
+    async function loadHomeroomData() {
+        try {
+            const response = await fetch('/api/schedule/teachers/me/students', {
+                headers: { 'Authorization': 'Bearer ' + teacherToken }
+            });
+            const data = await response.json();
+
+            if (!data.success) {
+                if (response.status === 401) { teacherLogout(); }
+                return;
+            }
+
+            currentTeacher = data.teacher || currentTeacher;
+            document.getElementById('teacherNameLabel').textContent = currentTeacher.name;
+            document.getElementById('teacherSubjectLabel').textContent = currentTeacher.subject;
+            document.getElementById('teacherGreetName').textContent = currentTeacher.name.split(' ')[0];
+
+            if (!data.homeroom_class) {
+                document.getElementById('homeroomLabel').textContent = 'Anda login sebagai guru mata pelajaran.';
+                document.getElementById('noHomeroomNotice').classList.remove('hidden');
+                document.getElementById('homeroomContent').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('homeroomLabel').textContent = 'Wali Kelas ' + data.homeroom_class;
+            document.getElementById('homeroomClassBig').textContent = data.homeroom_class;
+            document.getElementById('studentClass').value = data.homeroom_class;
+            document.getElementById('noHomeroomNotice').classList.add('hidden');
+            document.getElementById('homeroomContent').classList.remove('hidden');
+
+            document.getElementById('studentCount').textContent = data.students.length;
+            renderStudentsList(data.students);
+        } catch (error) {
+            console.error('Error loading homeroom data:', error);
+        }
+    }
+
+    function renderStudentsList(students) {
+        const container = document.getElementById('studentsList');
+        if (!students || students.length === 0) {
+            container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Belum ada siswa di kelas ini. Klik "Tambah Siswa" untuk mendaftarkan.</p>';
+            return;
+        }
+        container.innerHTML = students.map(function (s) {
+            const regDate = new Date(s.registration_date);
+            const dateLabel = isNaN(regDate.getTime()) ? '-' : regDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            const photoBadge = s.has_photo
+                ? '<span class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full font-semibold"><i class="fas fa-check mr-1"></i>Ada foto</span>'
+                : '<button onclick="openTakePhotoModal(\'' + s.nis + '\', \'' + s.name.replace(/'/g, "\\'") + '\')" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-semibold"><i class="fas fa-camera mr-1"></i>Ambil Foto</button>';
+            return '<div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">' +
+                '<div class="flex items-center gap-3">' +
+                '<div class="w-9 h-9 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center font-bold text-sm">' + s.name.charAt(0).toUpperCase() + '</div>' +
+                '<div><div class="font-semibold text-slate-800 text-sm">' + s.name + '</div>' +
+                '<div class="text-xs text-slate-500">NIS: ' + s.nis + ' &bull; Terdaftar ' + dateLabel + '</div></div></div>' +
+                photoBadge + '</div>';
+        }).join('');
+    }
+
+    // ---------- Add student modal + camera ----------
+    function openAddStudentModal() {
+        document.getElementById('addStudentForm').reset();
+        document.getElementById('studentClass').value = currentTeacher.homeroom_class || '';
+        document.getElementById('addStudentError').classList.add('hidden');
+        document.getElementById('addStudentSuccess').classList.add('hidden');
+        document.getElementById('nisCheckMsg').classList.add('hidden');
+        capturedImage = '';
+        document.getElementById('capturedPreview').classList.add('hidden');
+        document.getElementById('cameraBox').classList.remove('hidden');
+        document.getElementById('captureBtn').classList.remove('hidden');
+        document.getElementById('retakeBtn').classList.add('hidden');
+        document.getElementById('addStudentModal').classList.remove('hidden');
+        startCamera();
+    }
+
+    function closeAddStudentModal() {
+        stopCamera();
+        document.getElementById('addStudentModal').classList.add('hidden');
+    }
+
+    async function startCamera() {
+        try {
+            studentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('studentVideo').srcObject = studentStream;
+        } catch (error) {
+            console.error('Camera error:', error);
+            const errorBox = document.getElementById('addStudentError');
+            errorBox.classList.remove('hidden');
+            errorBox.textContent = 'Tidak dapat mengakses kamera. Izinkan akses kamera di browser.';
+        }
+    }
+
+    function stopCamera() {
+        if (studentStream) {
+            studentStream.getTracks().forEach(t => t.stop());
+            studentStream = null;
+        }
+    }
+
+    function capturePhoto() {
+        const video = document.getElementById('studentVideo');
+        const canvas = document.getElementById('studentCanvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        capturedImage = canvas.toDataURL('image/jpeg', 0.85);
+
+        const preview = document.getElementById('capturedPreview');
+        preview.src = capturedImage;
+        preview.classList.remove('hidden');
+        document.getElementById('cameraBox').classList.add('hidden');
+        document.getElementById('captureBtn').classList.add('hidden');
+        document.getElementById('retakeBtn').classList.remove('hidden');
+        stopCamera();
+    }
+
+    function retakePhoto() {
+        capturedImage = '';
+        document.getElementById('capturedPreview').classList.add('hidden');
+        document.getElementById('cameraBox').classList.remove('hidden');
+        document.getElementById('captureBtn').classList.remove('hidden');
+        document.getElementById('retakeBtn').classList.add('hidden');
+        startCamera();
+    }
+
+    // ---------- Take photo for an existing student (no camera used by admin) ----------
+    let takePhotoStream = null;
+    let takePhotoCapturedImage = '';
+    let takePhotoTargetNis = '';
+
+    async function openTakePhotoModal(nis, name) {
+        takePhotoTargetNis = nis;
+        takePhotoCapturedImage = '';
+        document.getElementById('takePhotoStudentName').textContent = name;
+        document.getElementById('takePhotoStudentNis').textContent = nis;
+        document.getElementById('takePhotoError').classList.add('hidden');
+        document.getElementById('takePhotoSuccess').classList.add('hidden');
+        document.getElementById('takePhotoPreview').classList.add('hidden');
+        document.getElementById('takePhotoCameraBox').classList.remove('hidden');
+        document.getElementById('takePhotoCaptureBtn').classList.remove('hidden');
+        document.getElementById('takePhotoRetakeBtn').classList.add('hidden');
+        document.getElementById('takePhotoModal').classList.remove('hidden');
+
+        try {
+            takePhotoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('takePhotoVideo').srcObject = takePhotoStream;
+        } catch (error) {
+            console.error('Camera error:', error);
+            const errorBox = document.getElementById('takePhotoError');
+            errorBox.classList.remove('hidden');
+            errorBox.textContent = 'Tidak dapat mengakses kamera.';
+        }
+    }
+
+    function closeTakePhotoModal() {
+        if (takePhotoStream) {
+            takePhotoStream.getTracks().forEach(t => t.stop());
+            takePhotoStream = null;
+        }
+        document.getElementById('takePhotoModal').classList.add('hidden');
+    }
+
+    function captureExistingPhoto() {
+        const video = document.getElementById('takePhotoVideo');
+        const canvas = document.getElementById('takePhotoCanvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        takePhotoCapturedImage = canvas.toDataURL('image/jpeg', 0.85);
+
+        const preview = document.getElementById('takePhotoPreview');
+        preview.src = takePhotoCapturedImage;
+        preview.classList.remove('hidden');
+        document.getElementById('takePhotoCameraBox').classList.add('hidden');
+        document.getElementById('takePhotoCaptureBtn').classList.add('hidden');
+        document.getElementById('takePhotoRetakeBtn').classList.remove('hidden');
+
+        if (takePhotoStream) {
+            takePhotoStream.getTracks().forEach(t => t.stop());
+            takePhotoStream = null;
+        }
+    }
+
+    async function retakeExistingPhoto() {
+        takePhotoCapturedImage = '';
+        document.getElementById('takePhotoPreview').classList.add('hidden');
+        document.getElementById('takePhotoCameraBox').classList.remove('hidden');
+        document.getElementById('takePhotoCaptureBtn').classList.remove('hidden');
+        document.getElementById('takePhotoRetakeBtn').classList.add('hidden');
+        try {
+            takePhotoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('takePhotoVideo').srcObject = takePhotoStream;
+        } catch (error) {
+            console.error('Camera error:', error);
+        }
+    }
+
+    async function submitExistingPhoto() {
+        const errorBox = document.getElementById('takePhotoError');
+        const successBox = document.getElementById('takePhotoSuccess');
+        errorBox.classList.add('hidden');
+        successBox.classList.add('hidden');
+
+        if (!takePhotoCapturedImage) {
+            errorBox.textContent = 'Ambil foto wajah terlebih dahulu.';
+            errorBox.classList.remove('hidden');
+            return;
+        }
+
+        const btn = document.getElementById('submitTakePhotoBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+
+        try {
+            const response = await fetch('/api/student/update-photo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nis: takePhotoTargetNis, face_image: takePhotoCapturedImage })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                successBox.textContent = 'Foto berhasil disimpan!';
+                successBox.classList.remove('hidden');
+                await loadHomeroomData();
+                setTimeout(closeTakePhotoModal, 1000);
+            } else {
+                errorBox.textContent = result.error || 'Gagal menyimpan foto';
+                errorBox.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Update photo error:', error);
+            errorBox.textContent = 'Tidak dapat terhubung ke server';
+            errorBox.classList.remove('hidden');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save mr-2"></i>Simpan Foto';
+        }
+    }
+
+    let nisCheckTimeout = null;
+    document.getElementById('studentNis').addEventListener('input', function () {
+        const nisMsg = document.getElementById('nisCheckMsg');
+        const nis = this.value.trim();
+        clearTimeout(nisCheckTimeout);
+        nisMsg.classList.add('hidden');
+
+        if (!nis) return;
+
+        // Debounce supaya tidak nembak API di setiap ketikan huruf
+        nisCheckTimeout = setTimeout(async function () {
+            try {
+                const response = await fetch('/api/students/check-nis?nis=' + encodeURIComponent(nis), {
+                    headers: { 'Authorization': 'Bearer ' + teacherToken }
+                });
+                const result = await response.json();
+                if (result.success && result.exists) {
+                    nisMsg.textContent = 'NIS ini sudah terdaftar atas nama ' + result.name + ' (kelas ' + result.class + '). Pastikan tidak salah ketik NIS.';
+                    nisMsg.className = 'text-xs mt-1.5 p-2 rounded-lg bg-amber-50 text-amber-700';
+                    nisMsg.classList.remove('hidden');
+                } else {
+                    nisMsg.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error checking NIS:', error);
+            }
+        }, 500);
+    });
+
+    document.getElementById('addStudentForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const errorBox = document.getElementById('addStudentError');
+        const successBox = document.getElementById('addStudentSuccess');
+        errorBox.classList.add('hidden');
+        successBox.classList.add('hidden');
+
+        if (!capturedImage) {
+            errorBox.textContent = 'Ambil foto wajah siswa terlebih dahulu.';
+            errorBox.classList.remove('hidden');
+            return;
+        }
+
+        const payload = {
+            nis: document.getElementById('studentNis').value.trim(),
+            name: document.getElementById('studentName').value.trim(),
+            class: document.getElementById('studentClass').value,
+            face_image: capturedImage
+        };
+
+        const submitBtn = document.getElementById('submitStudentBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + teacherToken
+                },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                successBox.textContent = 'Siswa berhasil didaftarkan!';
+                successBox.classList.remove('hidden');
+                await loadHomeroomData();
+                setTimeout(closeAddStudentModal, 1200);
+            } else {
+                errorBox.textContent = result.error || 'Gagal menyimpan data siswa';
+                errorBox.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Add student error:', error);
+            errorBox.textContent = 'Tidak dapat terhubung ke server';
+            errorBox.classList.remove('hidden');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Simpan Siswa';
+        }
+    });
+
+    // ---------- Init ----------
+    document.addEventListener('DOMContentLoaded', function () {
+        const savedToken = sessionStorage.getItem('teacherToken');
+        if (savedToken) {
+            teacherToken = savedToken;
+            showDashboard();
+        }
+        document.getElementById('addStudentModal').addEventListener('click', function (e) {
+            if (e.target === e.currentTarget) closeAddStudentModal();
+        });
+    });
+</script>
+</body>
+</html>

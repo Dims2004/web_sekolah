@@ -1,0 +1,13 @@
+services:
+  attendance-app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: school-attendance-app
+    ports:
+      - "8080:5000"
+    volumes:
+      - ./database:/app/database
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1

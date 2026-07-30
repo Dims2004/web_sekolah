@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pendaftaran Siswa Baru - SMART SCHOOL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.4.4/qrcode.min.js"></script>
+<style>@media print {
+        .no-print{display:none !important;}
+        body{background:#fff !important;}
+    }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<div class="container mx-auto px-4 py-10">
+
+    <!-- ============ FORM SECTION ============ -->
+    <div id="formSection" class="max-w-3xl mx-auto">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
+                <i class="fas fa-file-signature text-2xl text-indigo-600"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold text-slate-800 mb-2">Formulir Pendaftaran Siswa Baru</h1>
+            <p class="text-slate-500">Isi data di bawah dengan lengkap dan benar. Bukti pendaftaran bisa langsung diunduh dalam bentuk PDF setelah formulir dikirim.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form id="admissionForm" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Nama Lengkap <span class="text-red-500">*</span></label>
+                        <input type="text" id="full_name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nama lengkap calon siswa">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">NIK <span class="text-red-500">*</span></label>
+                        <input type="text" id="nik" required maxlength="16" inputmode="numeric" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="16 digit Nomor Induk Kependudukan">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Jenis Kelamin <span class="text-red-500">*</span></label>
+                        <select id="gender" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Pilih jenis kelamin</option>
+                            <option value="Laki-laki">Laki-laki</option>
+                            <option value="Perempuan">Perempuan</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Tempat Lahir <span class="text-red-500">*</span></label>
+                        <input type="text" id="birth_place" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contoh: Sidoarjo">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Tanggal Lahir <span class="text-red-500">*</span></label>
+                        <input type="date" id="birth_date" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Alamat Lengkap <span class="text-red-500">*</span></label>
+                        <textarea id="address" required rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Nama Orang Tua/Wali <span class="text-red-500">*</span></label>
+                        <input type="text" id="parent_name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">No. HP Orang Tua/Wali <span class="text-red-500">*</span></label>
+                        <input type="tel" id="phone" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="08xxxxxxxxxx">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Asal Sekolah</label>
+                        <input type="text" id="previous_school" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nama sekolah sebelumnya">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Kelas yang Dituju <span class="text-red-500">*</span></label>
+                        <select id="target_class" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Pilih kelas</option>
+                            <option value="10 IPA">10 IPA</option>
+                            <option value="10 IPS">10 IPS</option>
+                            <option value="11 IPA">11 IPA</option>
+                            <option value="11 IPS">11 IPS</option>
+                            <option value="12 IPA">12 IPA</option>
+                            <option value="12 IPS">12 IPS</option>
+                        </select>
+                    </div>
+
+
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Pas Foto</label>
+                        <input type="file" id="photo" accept="image/*" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <p class="text-xs text-gray-400 mt-1">Format JPG/PNG, maksimal sekitar 2MB. Opsional, bisa menyusul saat daftar ulang.</p>
+                        <img id="photoPreview" class="hidden mt-3 w-28 h-28 object-cover rounded-xl border border-gray-200">
+                    </div>
+                </div>
+
+                <div id="admissionError" class="hidden bg-red-50 text-red-700 p-3 rounded-lg text-sm"></div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-6 rounded-xl transition">
+                    <i class="fas fa-paper-plane mr-2"></i>Kirim Pendaftaran
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============ SUCCESS / BUKTI PENDAFTARAN SECTION ============ -->
+    <div id="successSection" class="hidden max-w-2xl mx-auto">
+        <div class="text-center mb-6 no-print">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                <i class="fas fa-check text-2xl text-green-600"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-800">Pendaftaran Berhasil Dikirim!</h1>
+            <p class="text-slate-500 mt-1">Simpan nomor pendaftaran di bawah ini dan unduh buktinya dalam bentuk PDF.</p>
+        </div>
+
+        <div id="proofCard" class="bg-white rounded-2xl shadow-xl p-8">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white" style="background:linear-gradient(135deg,#4338ca,#0ea5e9);"><i class="fas fa-graduation-cap"></i></div>
+                    <div>
+                        <div class="font-extrabold text-slate-800 leading-none">SMART SCHOOL</div>
+                        <div class="text-xs text-slate-500">Bukti Pendaftaran Siswa Baru</div>
+                    </div>
+                </div>
+                <img id="proofPhoto" class="hidden w-16 h-16 object-cover rounded-lg border border-gray-200">
+            </div>
+
+            <div class="bg-indigo-50 rounded-xl p-4 mb-6 text-center">
+                <div class="text-xs text-indigo-500 uppercase font-semibold tracking-wide">Nomor Pendaftaran</div>
+                <div id="proofRegNo" class="text-2xl font-extrabold text-indigo-700 mt-1">-</div>
+            </div>
+
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                <div><dt class="text-gray-500">Nama Lengkap</dt><dd class="font-semibold text-gray-800" id="proofName">-</dd></div>
+                <div><dt class="text-gray-500">NIK</dt><dd class="font-semibold text-gray-800" id="proofNik">-</dd></div>
+                <div><dt class="text-gray-500">Tempat, Tanggal Lahir</dt><dd class="font-semibold text-gray-800" id="proofBirth">-</dd></div>
+                <div><dt class="text-gray-500">Jenis Kelamin</dt><dd class="font-semibold text-gray-800" id="proofGender">-</dd></div>
+                <div class="sm:col-span-2"><dt class="text-gray-500">Alamat</dt><dd class="font-semibold text-gray-800" id="proofAddress">-</dd></div>
+                <div><dt class="text-gray-500">Orang Tua/Wali</dt><dd class="font-semibold text-gray-800" id="proofParent">-</dd></div>
+                <div><dt class="text-gray-500">No. HP</dt><dd class="font-semibold text-gray-800" id="proofPhone">-</dd></div>
+                <div><dt class="text-gray-500">Asal Sekolah</dt><dd class="font-semibold text-gray-800" id="proofSchool">-</dd></div>
+                <div><dt class="text-gray-500">Kelas Dituju</dt><dd class="font-semibold text-gray-800" id="proofClass">-</dd></div>
+            </dl>
+
+            <div class="mt-6 pt-4 border-t border-gray-100 text-xs text-gray-400 flex justify-between">
+                <span>Dikirim: <span id="proofDate">-</span></span>
+                <span>SMART SCHOOL &bull; Sistem PPDB Online</span>
+            </div>
+        </div>
+
+        <!-- Payment / re-registration info -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mt-6">
+            <h3 class="font-bold text-slate-800 mb-1 flex items-center"><i class="fas fa-money-check-alt text-indigo-600 mr-2"></i>Pembayaran Daftar Ulang</h3>
+            <p class="text-sm text-slate-500 mb-5">Tunjukkan kode di bawah ini ke bagian tata usaha saat melakukan pembayaran daftar ulang.</p>
+            <div class="flex flex-col sm:flex-row items-center gap-6">
+                <canvas id="paymentQrCanvas" class="border border-gray-100 rounded-lg p-2"></canvas>
+                <div class="flex-1 text-center sm:text-left">
+                    <div class="text-xs text-gray-500 uppercase tracking-wide">Nominal Daftar Ulang</div>
+                    <div class="text-3xl font-extrabold text-indigo-700 mt-1">Rp 100.000</div>
+                    <div class="text-xs text-gray-400 mt-2">Scan kode ini untuk membuka WhatsApp dengan pesan konfirmasi pembayaran (nama & nominal terisi otomatis), lalu transfer ShopeePay ke nomor yang sama.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mt-6 flex items-start gap-3">
+            <i class="fas fa-circle-exclamation text-amber-500 mt-1"></i>
+            <div>
+                <div class="font-bold text-amber-800 text-sm">Langkah Selanjutnya: Lengkapi Berkas</div>
+                <p class="text-amber-700 text-sm mt-1">Pendaftaran belum selesai sebelum berkas persyaratan (NIK, Akta Kelahiran, Bukti Pembayaran) diunggah. Panitia baru bisa memproses pendaftaranmu setelah berkas lengkap.</p>
+            </div>
+        </div>
+        <a id="completeDocsLink" href="admission-berkas.html" class="block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl mt-4">
+            <i class="fas fa-folder-open mr-2"></i>Lengkapi Berkas Pendaftaran Sekarang
+        </a>
+
+        <div class="flex flex-col sm:flex-row gap-3 mt-4 no-print">
+            <button onclick="downloadPDF()" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-3 px-6 rounded-xl">
+                <i class="fas fa-file-pdf mr-2"></i>Unduh PDF
+            </button>
+            <a id="checkStatusLink" href="cek-status-ppdb.html" class="flex-1 text-center bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold py-3 px-6 rounded-xl">
+                <i class="fas fa-list-check mr-2"></i>Cek Status
+            </a>
+            <a href="index.html" class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl">
+                <i class="fas fa-home mr-2"></i>Beranda
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    let photoBase64 = '';
+    let lastSubmission = null;
+    let qrDataUrl = '';
+
+    // Isi dropdown Ekstrakurikuler + otomatis pilih sesuai ?ekskul=... di URL
+    // (dipakai saat tombol "Daftar Ekstrakurikuler" diklik dari slide di Beranda)
+async function initExtracurricularField() {
+    const select = document.getElementById('extracurricular');
+    const params = new URLSearchParams(window.location.search);
+    const preselected = params.get('ekskul') || '';
+
+    try {
+        const response = await fetch('/api/extracurriculars');
+        const data = await response.json();
+        if (data.success) {
+            data.extracurriculars.forEach(function (ex) {
+                const opt = document.createElement('option');
+                opt.value = ex.name;
+                opt.textContent = ex.name;
+                select.appendChild(opt);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading extracurriculars:', error);
+    }
+
+    if (preselected) {
+        select.value = preselected;
+        if (select.value !== preselected) {
+            const opt = document.createElement('option');
+            opt.value = preselected;
+            opt.textContent = preselected;
+            select.appendChild(opt);
+            select.value = preselected;
+        }
+
+        // Ubah judul & subjudul halaman biar jelas ini pendaftaran ekstrakurikuler
+        const heading = document.querySelector('#formSection h1');
+        const subheading = document.querySelector('#formSection p');
+        if (heading) heading.textContent = 'Pendaftaran Ekstrakurikuler: ' + preselected;
+        if (subheading) subheading.textContent = 'Lengkapi data diri untuk mendaftar ekstrakurikuler ' + preselected + '. Data ini tetap tercatat sebagai pendaftaran siswa baru.';
+
+        const banner = document.createElement('div');
+        banner.className = 'bg-indigo-50 text-indigo-700 text-sm p-3 rounded-lg mb-5';
+        banner.innerHTML = '<i class="fas fa-circle-check mr-2"></i>Kamu mendaftar dari slide <strong>' + preselected + '</strong>, field Ekstrakurikuler di bawah sudah otomatis terisi.';
+        document.getElementById('admissionForm').prepend(banner);
+    }
+}
+
+    document.addEventListener('DOMContentLoaded', initExtracurricularField);
+
+    document.getElementById('photo').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) { photoBase64 = ''; document.getElementById('photoPreview').classList.add('hidden'); return; }
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            photoBase64 = ev.target.result;
+            const preview = document.getElementById('photoPreview');
+            preview.src = photoBase64;
+            preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    document.getElementById('admissionForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const errorBox = document.getElementById('admissionError');
+        errorBox.classList.add('hidden');
+
+        const nik = document.getElementById('nik').value.trim();
+        if (nik.length !== 16 || !/^\d+$/.test(nik)) {
+            errorBox.textContent = 'NIK harus terdiri dari 16 digit angka.';
+            errorBox.classList.remove('hidden');
+            return;
+        }
+
+        const payload = {
+            full_name: document.getElementById('full_name').value.trim(),
+            nik: nik,
+            birth_place: document.getElementById('birth_place').value.trim(),
+            birth_date: document.getElementById('birth_date').value,
+            gender: document.getElementById('gender').value,
+            address: document.getElementById('address').value.trim(),
+            parent_name: document.getElementById('parent_name').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            previous_school: document.getElementById('previous_school').value.trim(),
+            target_class: document.getElementById('target_class').value,
+            photo: photoBase64
+        };
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengirim...';
+
+        try {
+            const response = await fetch('/api/admission/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                lastSubmission = Object.assign({}, payload, {
+                    registration_no: result.registration_no,
+                    submitted_at: result.submitted_at,
+                    payment_amount: result.payment_amount
+                });
+                showProof(lastSubmission);
+            } else {
+                errorBox.textContent = result.error || 'Terjadi kesalahan saat mengirim pendaftaran';
+                errorBox.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Admission submit error:', error);
+            errorBox.textContent = 'Tidak dapat terhubung ke server';
+            errorBox.classList.remove('hidden');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Kirim Pendaftaran';
+        }
+    });
+
+    function showProof(data) {
+        document.getElementById('formSection').classList.add('hidden');
+        document.getElementById('successSection').classList.remove('hidden');
+        document.getElementById('checkStatusLink').href = 'cek-status-ppdb.html?reg=' + encodeURIComponent(data.registration_no);
+        document.getElementById('completeDocsLink').href = 'admission-berkas.html?reg=' + encodeURIComponent(data.registration_no);
+
+        document.getElementById('proofRegNo').textContent = data.registration_no;
+        document.getElementById('proofName').textContent = data.full_name;
+        document.getElementById('proofNik').textContent = data.nik;
+        document.getElementById('proofBirth').textContent = data.birth_place + ', ' + formatDate(data.birth_date);
+        document.getElementById('proofGender').textContent = data.gender;
+        document.getElementById('proofAddress').textContent = data.address;
+        document.getElementById('proofParent').textContent = data.parent_name;
+        document.getElementById('proofPhone').textContent = data.phone;
+        document.getElementById('proofSchool').textContent = data.previous_school || '-';
+        document.getElementById('proofClass').textContent = data.target_class;
+        document.getElementById('proofDate').textContent = data.submitted_at;
+
+        if (data.photo) {
+            const img = document.getElementById('proofPhoto');
+            img.src = data.photo;
+            img.classList.remove('hidden');
+        }
+
+const paymentAmount = data.payment_amount || 100000;
+const waNumber = '6281930752930'; // nomor WhatsApp/ShopeePay sekolah (format: 62 diikuti nomor tanpa angka 0 di depan)
+const waMessage = 'Halo, saya ingin konfirmasi pembayaran daftar ulang.\n' +
+    'Nama: ' + data.full_name + '\n' +
+    'No. Pendaftaran: ' + data.registration_no + '\n' +
+    'Nominal: Rp' + paymentAmount.toLocaleString('id-ID');
+const qrText = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(waMessage);
+        const canvas = document.getElementById('paymentQrCanvas');
+        if (window.QRCode && canvas) {
+            QRCode.toCanvas(canvas, qrText, { width: 140, margin: 1 }, function (err) {
+                if (err) console.error('QR generation error:', err);
+            });
+        }
+        QRCode.toDataURL(qrText, { width: 200, margin: 1 }, function (err, url) {
+            if (!err) qrDataUrl = url;
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function formatDate(isoDate) {
+        if (!isoDate) return '-';
+        const d = new Date(isoDate);
+        if (isNaN(d.getTime())) return isoDate;
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    function downloadPDF() {
+        if (!lastSubmission) return;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+        const marginX = 48;
+        let y = 56;
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('SMART SCHOOL', marginX, y);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text('Bukti Pendaftaran Siswa Baru', marginX, y + 16);
+
+        doc.setDrawColor(200);
+        y += 30;
+        doc.line(marginX, y, 547, y);
+
+        y += 28;
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text('Nomor Pendaftaran: ' + lastSubmission.registration_no, marginX, y);
+
+        if (lastSubmission.photo) {
+            try { doc.addImage(lastSubmission.photo, 'JPEG', 447, y - 20, 100, 100); } catch (e) { console.warn('Photo embed skipped:', e); }
+        }
+
+        y += 28;
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+
+        const rows = [
+            ['Nama Lengkap', lastSubmission.full_name],
+            ['NIK', lastSubmission.nik],
+            ['Tempat, Tanggal Lahir', lastSubmission.birth_place + ', ' + formatDate(lastSubmission.birth_date)],
+            ['Jenis Kelamin', lastSubmission.gender],
+            ['Alamat', lastSubmission.address],
+            ['Orang Tua / Wali', lastSubmission.parent_name],
+            ['No. HP', lastSubmission.phone],
+            ['Asal Sekolah', lastSubmission.previous_school || '-'],
+            ['Kelas Dituju', lastSubmission.target_class],
+            ['Waktu Pendaftaran', lastSubmission.submitted_at]
+        ];
+
+        rows.forEach(function (row) {
+            const label = row[0];
+            const value = String(row[1] || '-');
+            const lines = doc.splitTextToSize(value, 300);
+            doc.setFont(undefined, 'bold');
+            doc.text(label, marginX, y);
+            doc.setFont(undefined, 'normal');
+            doc.text(lines, marginX + 170, y);
+            y += Math.max(18, lines.length * 14);
+        });
+
+        y += 10;
+        doc.setDrawColor(200);
+        doc.line(marginX, y, 547, y);
+        y += 24;
+
+        // Payment / re-registration section
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text('Pembayaran Daftar Ulang', marginX, y);
+        y += 20;
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(11);
+        doc.text('Nominal: Rp ' + (lastSubmission.payment_amount || 100000).toLocaleString('id-ID'), marginX, y);
+        doc.text('Tunjukkan kode QR di samping ke bagian', marginX, y + 16);
+        doc.text('tata usaha saat membayar daftar ulang.', marginX, y + 30);
+
+        if (qrDataUrl) {
+            try { doc.addImage(qrDataUrl, 'PNG', 420, y - 20, 110, 110); } catch (e) { console.warn('QR embed skipped:', e); }
+        }
+        y += 60;
+
+        y += 24;
+        doc.setDrawColor(200);
+        doc.line(marginX, y, 547, y);
+        y += 20;
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text('Dokumen ini adalah bukti bahwa formulir pendaftaran telah diterima oleh sistem PPDB SMART SCHOOL.', marginX, y);
+        doc.text('Silakan bawa dokumen ini beserta berkas asli saat proses daftar ulang di sekolah.', marginX, y + 14);
+
+        doc.save('bukti-pendaftaran-' + lastSubmission.registration_no + '.pdf');
+    }
+</script>
+</body>
+</html>

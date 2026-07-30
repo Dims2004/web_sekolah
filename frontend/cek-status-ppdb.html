@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cek Status Pendaftaran - SMART SCHOOL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+<div class="container mx-auto px-4 py-10">
+
+    <!-- ============ SEARCH FORM ============ -->
+    <div id="searchSection" class="max-w-lg mx-auto">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
+                <i class="fas fa-magnifying-glass text-2xl text-indigo-600"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-800 mb-2">Cek Status Pendaftaran</h1>
+            <p class="text-slate-500 text-sm">Masukkan nomor pendaftaran atau NIK yang kamu pakai saat mendaftar PPDB.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form id="statusForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Nomor Pendaftaran</label>
+                    <input type="text" id="regNoInput" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contoh: PPDB-20260728-0001">
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                    <span class="text-xs text-gray-400">ATAU</span>
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">NIK</label>
+                    <input type="text" id="nikInput" maxlength="16" inputmode="numeric" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="16 digit Nomor Induk Kependudukan">
+                </div>
+
+                <div id="searchError" class="hidden bg-red-50 text-red-700 p-3 rounded-lg text-sm"></div>
+
+                <button type="submit" id="searchBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-6 rounded-xl transition">
+                    <i class="fas fa-search mr-2"></i>Cek Status
+                </button>
+
+                <a href="admission.html" class="block text-center text-sm text-slate-500 hover:text-indigo-700">
+                    <i class="fas fa-arrow-left mr-2"></i>Belum daftar? Isi formulir PPDB
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============ RESULT SECTION ============ -->
+    <div id="resultSection" class="hidden max-w-3xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-800">Status Pendaftaran</h1>
+                <p class="text-slate-500 text-sm" id="resultSubtitle">-</p>
+            </div>
+            <button onclick="backToSearch()" class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold">
+                <i class="fas fa-arrow-left mr-1"></i>Cek Lainnya
+            </button>
+        </div>
+
+        <!-- Ringkasan hasil (hijau = diterima, merah = ditolak, kuning = menunggu) -->
+        <div id="statusBanner" class="rounded-2xl p-6 mb-6 flex items-center gap-4">
+            <div id="statusIconWrap" class="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0">
+                <i id="statusIcon" class="fas fa-hourglass-half text-2xl"></i>
+            </div>
+            <div>
+                <div class="text-xs uppercase font-bold tracking-wide" id="statusLabelSmall">Status</div>
+                <div class="text-2xl font-extrabold" id="statusLabelBig">Menunggu Keputusan</div>
+                <p class="text-sm mt-1" id="statusNoteText"></p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 class="font-bold text-slate-800">STATUS PENDAFTARAN SEKARANG</h2>
+                <span class="text-sm text-indigo-700 font-semibold" id="resultRegNo">-</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600">
+                            <th class="py-3 px-4 text-left w-12">No</th>
+                            <th class="py-3 px-4 text-left">Tahapan</th>
+                            <th class="py-3 px-4 text-left">Progres</th>
+                            <th class="py-3 px-4 text-left">Tanggal</th>
+                            <th class="py-3 px-4 text-left">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statusStagesTable"></tbody>
+                </table>
+            </div>
+            <div class="px-6 py-3 text-right text-xs text-gray-400 border-t border-gray-100">
+                Terakhir diperbarui: <span id="lastUpdatedLabel">-</span>
+            </div>
+        </div>
+
+        <div class="mt-6 text-center" id="acceptedCta"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('statusForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const regNo = document.getElementById('regNoInput').value.trim();
+        const nik = document.getElementById('nikInput').value.trim();
+        const errorBox = document.getElementById('searchError');
+        errorBox.classList.add('hidden');
+
+        if (!regNo && !nik) {
+            errorBox.textContent = 'Isi salah satu: nomor pendaftaran atau NIK.';
+            errorBox.classList.remove('hidden');
+            return;
+        }
+
+        const btn = document.getElementById('searchBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mencari...';
+
+        try {
+            const params = new URLSearchParams();
+            if (regNo) params.set('registration_no', regNo);
+            else params.set('nik', nik);
+
+            const response = await fetch('/api/admission/status?' + params.toString());
+            const result = await response.json();
+
+            if (result.success) {
+                renderResult(result.admission);
+            } else {
+                errorBox.textContent = result.error || 'Data pendaftaran tidak ditemukan.';
+                errorBox.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Check status error:', error);
+            errorBox.textContent = 'Tidak dapat terhubung ke server.';
+            errorBox.classList.remove('hidden');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search mr-2"></i>Cek Status';
+        }
+    });
+
+    function backToSearch() {
+        document.getElementById('resultSection').classList.add('hidden');
+        document.getElementById('searchSection').classList.remove('hidden');
+    }
+
+    function formatDate(value) {
+        if (!value) return '-';
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return value;
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function isBerkasIssueNote(note) {
+    return /berkas|dokumen|lengkap/i.test(note || '');
+}
+
+    function renderResult(a) {
+        document.getElementById('searchSection').classList.add('hidden');
+        document.getElementById('resultSection').classList.remove('hidden');
+
+        document.getElementById('resultSubtitle').textContent = a.full_name + ' \u00b7 Kelas Dituju ' + (a.target_class || '-');
+        document.getElementById('resultRegNo').textContent = a.registration_no;
+        document.getElementById('lastUpdatedLabel').textContent = formatDate(a.status_updated_at) !== '-' ? formatDate(a.status_updated_at) : formatDate(a.created_at);
+
+        const banner = document.getElementById('statusBanner');
+        const iconWrap = document.getElementById('statusIconWrap');
+        const icon = document.getElementById('statusIcon');
+        const labelSmall = document.getElementById('statusLabelSmall');
+        const labelBig = document.getElementById('statusLabelBig');
+        const noteText = document.getElementById('statusNoteText');
+        const cta = document.getElementById('acceptedCta');
+        cta.innerHTML = '';
+
+        if (a.status === 'diterima') {
+            banner.className = 'rounded-2xl p-6 mb-6 flex items-center gap-4 bg-green-50 border border-green-200';
+            iconWrap.className = 'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-green-100 text-green-600';
+            icon.className = 'fas fa-circle-check text-2xl';
+            labelSmall.className = 'text-xs uppercase font-bold tracking-wide text-green-600';
+            labelBig.className = 'text-2xl font-extrabold text-green-700';
+            labelBig.textContent = 'Selamat, Diterima!';
+            noteText.textContent = a.status_note || 'Kamu dinyatakan diterima sebagai siswa baru. Silakan lakukan daftar ulang sesuai jadwal yang diinformasikan sekolah.';
+            cta.innerHTML = '<a href="student.html" class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-xl"><i class="fas fa-right-to-bracket mr-2"></i>Lanjut ke Portal Siswa</a>' +
+                '<p class="text-xs text-gray-400 mt-3">Login Portal Siswa baru bisa dipakai setelah pihak sekolah mendaftarkan wajah dan NIS kamu saat daftar ulang.</p>';
+} else if (a.status === 'ditolak' && isBerkasIssueNote(a.status_note)) {
+    banner.className = 'rounded-2xl p-6 mb-6 flex items-center gap-4 bg-orange-50 border border-orange-200';
+    iconWrap.className = 'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-orange-100 text-orange-600';
+    icon.className = 'fas fa-folder-open text-2xl';
+    labelSmall.className = 'text-xs uppercase font-bold tracking-wide text-orange-600';
+    labelBig.className = 'text-2xl font-extrabold text-orange-700';
+    labelBig.textContent = 'Perlu Melengkapi Berkas';
+    noteText.textContent = a.status_note;
+    cta.innerHTML = '<a href="admission-berkas.html?reg=' + encodeURIComponent(a.registration_no) + '" class="inline-flex items-center bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl"><i class="fas fa-upload mr-2"></i>Lengkapi Berkas Sekarang</a>' +
+        '<p class="text-xs text-gray-400 mt-3">Setelah berkas dilengkapi, panitia PPDB akan memeriksa kembali pendaftaran kamu.</p>';
+} else if (a.status === 'ditolak') {
+    banner.className = 'rounded-2xl p-6 mb-6 flex items-center gap-4 bg-red-50 border border-red-200';
+    iconWrap.className = 'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-red-100 text-red-600';
+    icon.className = 'fas fa-circle-xmark text-2xl';
+    labelSmall.className = 'text-xs uppercase font-bold tracking-wide text-red-600';
+    labelBig.className = 'text-2xl font-extrabold text-red-700';
+    labelBig.textContent = 'Belum Berhasil';
+    noteText.textContent = a.status_note || 'Mohon maaf, pendaftaran kamu belum bisa kami terima kali ini.';
+
+        } else if (a.status === 'perlu_lengkapi_berkas') {
+            banner.className = 'rounded-2xl p-6 mb-6 flex items-center gap-4 bg-orange-50 border border-orange-200';
+            iconWrap.className = 'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-orange-100 text-orange-600';
+            icon.className = 'fas fa-folder-open text-2xl';
+            labelSmall.className = 'text-xs uppercase font-bold tracking-wide text-orange-600';
+            labelBig.className = 'text-2xl font-extrabold text-orange-700';
+            labelBig.textContent = 'Perlu Melengkapi Berkas';
+            noteText.textContent = a.status_note || 'Berkas pendaftaran kamu belum lengkap. Silakan lengkapi berkas yang diminta agar pendaftaran bisa diproses lebih lanjut.';
+            cta.innerHTML = '<a href="admission-berkas.html?reg=' + encodeURIComponent(a.registration_no) + '" class="inline-flex items-center bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl"><i class="fas fa-upload mr-2"></i>Lengkapi Berkas Sekarang</a>' +
+                '<p class="text-xs text-gray-400 mt-3">Setelah berkas dilengkapi, panitia PPDB akan memeriksa kembali pendaftaran kamu.</p>';
+        } else {
+            banner.className = 'rounded-2xl p-6 mb-6 flex items-center gap-4 bg-amber-50 border border-amber-200';
+            iconWrap.className = 'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-amber-100 text-amber-600';
+            icon.className = 'fas fa-hourglass-half text-2xl';
+            labelSmall.className = 'text-xs uppercase font-bold tracking-wide text-amber-600';
+            labelBig.className = 'text-2xl font-extrabold text-amber-700';
+            labelBig.textContent = 'Menunggu Keputusan';
+            noteText.textContent = a.status_note || 'Pendaftaran kamu sedang diproses oleh panitia PPDB. Cek kembali halaman ini secara berkala.';
+        }
+
+        renderStages(a);
+    }
+
+    function renderStages(a) {
+const needsDocs = a.status === 'perlu_lengkapi_berkas' || (a.status === 'ditolak' && isBerkasIssueNote(a.status_note));
+const isDecided = a.status === 'diterima' || (a.status === 'ditolak' && !needsDocs);
+        const decisionDate = (isDecided || needsDocs) ? formatDate(a.status_updated_at) : '-';
+const decisionLabel = a.status === 'diterima' ? 'Diterima' : (isDecided ? 'Ditolak' : '-');
+const decisionColor = a.status === 'diterima' ? 'text-green-600' : (isDecided ? 'text-red-600' : 'text-gray-400');
+
+        const verifyProgress = needsDocs ? 'Lengkapi Berkas' : (isDecided ? 'Sudah' : '-');
+        const verifyColor = needsDocs ? 'text-orange-600' : undefined;
+
+        const stages = [
+            { no: 1, label: 'Formulir pendaftaran diterima sistem', progress: 'Sudah', date: formatDate(a.created_at), note: '-' },
+            { no: 2, label: 'Verifikasi berkas oleh panitia PPDB', progress: verifyProgress, date: (isDecided || needsDocs) ? decisionDate : '-', note: needsDocs ? (a.status_note || 'Berkas belum lengkap') : '-', colorClass: verifyColor },
+            { no: 3, label: 'Hasil seleksi penerimaan', progress: isDecided ? decisionLabel : 'Menunggu', date: isDecided ? decisionDate : '-', note: isDecided ? (a.status_note || '-') : '-', colorClass: decisionColor }
+        ];
+
+        const tbody = document.getElementById('statusStagesTable');
+        tbody.innerHTML = stages.map(function (s, idx) {
+            const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/60';
+            const progressColor = s.colorClass || (s.progress === 'Sudah' ? 'text-green-600' : 'text-gray-400');
+            return '<tr class="' + rowBg + ' border-b border-gray-50">' +
+                '<td class="py-3 px-4 text-gray-500">' + s.no + '</td>' +
+                '<td class="py-3 px-4 text-gray-700">' + s.label + '</td>' +
+                '<td class="py-3 px-4 font-semibold ' + progressColor + '">' + s.progress + '</td>' +
+                '<td class="py-3 px-4 text-gray-500">' + s.date + '</td>' +
+                '<td class="py-3 px-4 text-gray-500">' + s.note + '</td>' +
+                '</tr>';
+        }).join('');
+    }
+
+    // Isi otomatis kalau dibuka dari link bukti pendaftaran (?reg=...)
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+        const reg = params.get('reg');
+        if (reg) {
+            document.getElementById('regNoInput').value = reg;
+            document.getElementById('statusForm').dispatchEvent(new Event('submit'));
+        }
+    });
+</script>
+</body>
+</html>

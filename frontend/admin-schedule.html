@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Kelola Jadwal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/schedule.css">
+
+</head>
+<body class="bg-gray-100 min-h-screen">
+<!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-purple-100 rounded-full mb-4">
+                    <i class="fas fa-calendar-alt text-3xl text-purple-600"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Admin Login</h2>
+                <p class="text-gray-600">Masuk untuk kelola jadwal</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Username</label>
+                    <input type="text" id="username" value="admin"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="password" value="admin123"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           required>
+                </div>
+                <div id="loginError" class="hidden bg-red-50 text-red-700 p-3 rounded-lg text-sm"></div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-xl">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Admin Panel -->
+    <div id="adminPanel" class="hidden">
+        <!-- Top Navigation with Back Button -->
+        <nav class="bg-white shadow-lg">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-4">
+                        <!-- BACK TO ADMIN PANEL BUTTON -->
+                        <a href="admin.html" 
+                           class="flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Kembali ke Admin Panel
+                        </a>
+                        
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-calendar-alt text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-xl font-bold text-gray-800">Admin - Kelola Jadwal</h1>
+                                <p class="text-sm text-gray-500">Tambah, edit, dan hapus jadwal pelajaran</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <span id="adminName" class="font-medium text-gray-800">Administrator</span>
+                        <button onclick="logout()" 
+                                class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mx-auto px-4 py-8">
+            <!-- Breadcrumb Navigation -->
+            <div class="flex items-center text-sm text-gray-500 mb-6">
+                <a href="admin.html" class="hover:text-purple-600">Admin Panel</a>
+                <i class="fas fa-chevron-right mx-2 text-xs"></i>
+                <span class="text-purple-600 font-medium">Kelola Jadwal</span>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white rounded-xl shadow p-4">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Total Jadwal</div>
+                            <div class="text-2xl font-bold text-gray-800" id="totalSchedules">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-chalkboard-teacher text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Total Guru</div>
+                            <div class="text-2xl font-bold text-gray-800" id="totalTeachers">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-door-open text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Total Ruangan</div>
+                            <div class="text-2xl font-bold text-gray-800" id="totalRooms">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-users text-yellow-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Total Kelas</div>
+                            <div class="text-2xl font-bold text-gray-800" id="totalClasses">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4 mb-8">
+                <button onclick="showAddScheduleModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg">
+                    <i class="fas fa-plus mr-2"></i>Tambah Jadwal
+                </button>
+                <a href="admin.html" onclick="sessionStorage.setItem('adminOpenSection','teachers')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center">
+                    <i class="fas fa-user-plus mr-2"></i>Tambah/Kelola Guru
+                </a>
+                <button onclick="showAddRoomModal()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg">
+                    <i class="fas fa-door-open mr-2"></i>Tambah Ruangan
+                </button>
+                <button onclick="showAddClassModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg">
+                    <i class="fas fa-chalkboard mr-2"></i>Tambah Kelas
+                </button>
+                
+                <!-- Quick Links -->
+                <a href="schedule.html" target="_blank" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-6 py-3 rounded-lg">
+                    <i class="fas fa-eye mr-2"></i>Lihat Jadwal Publik
+                </a>
+                <a href="admin.html" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Dashboard Admin
+                </a>
+            </div>
+
+            <!-- Filter -->
+            <div class="bg-white rounded-xl shadow p-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Filter Kelas</label>
+                        <select id="filterClass" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="">Semua Kelas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Filter Hari</label>
+                        <select id="filterDay" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="all">Semua Hari</option>
+                            <option value="senin">Senin</option>
+                            <option value="selasa">Selasa</option>
+                            <option value="rabu">Rabu</option>
+                            <option value="kamis">Kamis</option>
+                            <option value="jumat">Jumat</option>
+                            <option value="sabtu">Sabtu</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Cari Jadwal</label>
+                        <input type="text" id="searchSchedule" placeholder="Cari mapel/guru..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div class="flex items-end space-x-2">
+                        <button onclick="loadSchedules()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex-1">
+                            <i class="fas fa-search mr-2"></i>Filter
+                        </button>
+                        <button onclick="resetFilters()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedules Table -->
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-gray-800">Daftar Jadwal</h3>
+                        <p class="text-sm text-gray-500" id="scheduleCount">Memuat data...</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="exportScheduleToCSV()" class="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-lg">
+                            <i class="fas fa-file-export mr-2"></i>Export CSV
+                        </button>
+                        <button onclick="refreshData()" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="py-3 px-4 text-left">Kelas</th>
+                                <th class="py-3 px-4 text-left">Hari</th>
+                                <th class="py-3 px-4 text-left">Waktu</th>
+                                <th class="py-3 px-4 text-left">Mata Pelajaran</th>
+                                <th class="py-3 px-4 text-left">Guru</th>
+                                <th class="py-3 px-4 text-left">Ruangan</th>
+                                <th class="py-3 px-4 text-left">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedulesTable">
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-gray-400">
+                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                    <p>Memuat jadwal...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tambah/Edit Jadwal -->
+    <div id="scheduleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800" id="modalTitle">Tambah Jadwal</h3>
+                    <button onclick="closeModal('scheduleModal')" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="scheduleForm" class="space-y-4">
+                    <input type="hidden" id="scheduleId">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Kelas</label>
+                            <select id="class_name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="">Pilih Kelas</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Hari</label>
+                            <select id="day" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="">Pilih Hari</option>
+                                <option value="senin">Senin</option>
+                                <option value="selasa">Selasa</option>
+                                <option value="rabu">Rabu</option>
+                                <option value="kamis">Kamis</option>
+                                <option value="jumat">Jumat</option>
+                                <option value="sabtu">Sabtu</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+<div>
+    <label class="block text-gray-700 text-sm font-medium mb-2">Waktu</label>
+    <div class="grid grid-cols-2 gap-3">
+        <input type="time" id="timeStart" required
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+        <input type="time" id="timeEnd" required
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+    </div>
+</div>
+                    
+<div>
+    <label class="block text-gray-700 text-sm font-medium mb-2">Mata Pelajaran</label>
+    <select id="subject" required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+        <option value="">Pilih Guru dulu untuk memilih Mata Pelajaran</option>
+    </select>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">Guru</label>
+        <select id="teacher" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+            <option value="">Pilih Guru</option>
+        </select>
+    </div>
+    
+    <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">Ruangan</label>
+        <select id="room" required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+            <option value="">Pilih Ruangan</option>
+        </select>
+    </div>
+</div>
+                    
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Warna</label>
+                        <select id="color" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="blue">Biru</option>
+                            <option value="green">Hijau</option>
+                            <option value="purple">Ungu</option>
+                            <option value="yellow">Kuning</option>
+                            <option value="red">Merah</option>
+                            <option value="teal">Turquoise</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex gap-4 mt-6">
+                        <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-xl">
+                            Simpan
+                        </button>
+                        <button type="button" onclick="closeModal('scheduleModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Ruangan -->
+    <div id="roomModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">Tambah Ruangan</h3>
+            <form id="roomForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Nama Ruangan</label>
+                    <input type="text" id="roomName" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Kapasitas</label>
+                    <input type="number" id="capacity"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl">
+                        Simpan
+                    </button>
+                    <button type="button" onclick="closeModal('roomModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Kelas -->
+    <div id="classModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">Tambah Kelas</h3>
+            <form id="classForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Nama Kelas</label>
+                    <input type="text" id="className" required placeholder="Contoh: 10 IPA 1"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="submit" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 px-6 rounded-xl">
+                        Simpan
+                    </button>
+                    <button type="button" onclick="closeModal('classModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Hapus Jadwal?</h3>
+                <p class="text-gray-600 mb-6">Data yang dihapus tidak dapat dikembalikan</p>
+                <input type="hidden" id="deleteId">
+                <div class="flex gap-4">
+                    <button onclick="confirmDelete()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl">
+                        Hapus
+                    </button>
+                    <button onclick="closeModal('deleteModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Admin state
+        let adminToken = null;
+        let currentEditId = null;
+        let allSchedules = [];
+
+        // Check login on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedToken = localStorage.getItem('adminToken');
+            if (savedToken) {
+                adminToken = savedToken;
+                showAdminPanel();
+            } else {
+                document.getElementById('loginModal').classList.remove('hidden');
+            }
+            
+            // Setup search
+            document.getElementById('searchSchedule').addEventListener('input', function(e) {
+                filterSchedules();
+            });
+        });
+
+        // Login form
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorBox = document.getElementById('loginError');
+            errorBox.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    adminToken = result.token;
+                    localStorage.setItem('adminToken', adminToken);
+                    localStorage.setItem('adminUser', JSON.stringify(result.user));
+                    showAdminPanel();
+                } else {
+                    errorBox.textContent = result.error || 'Username atau password salah';
+                    errorBox.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorBox.textContent = 'Tidak dapat terhubung ke server';
+                errorBox.classList.remove('hidden');
+            }
+        });
+
+        function showAdminPanel() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            loadSchedules();
+            loadStats();
+        }
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminUser');
+            adminToken = null;
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        // Load schedules
+        async function loadSchedules() {
+            const classFilter = document.getElementById('filterClass').value;
+            const dayFilter = document.getElementById('filterDay').value;
+            
+            let url = '/api/schedule/list';
+            const params = [];
+            if (classFilter) params.push(`class=${classFilter}`);
+            if (dayFilter && dayFilter !== 'all') params.push(`day=${dayFilter}`);
+            if (params.length) url += '?' + params.join('&');
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success) {
+                    allSchedules = data.schedule;
+                    renderSchedules(data.schedule);
+                }
+            } catch (error) {
+                console.error('Error loading schedules:', error);
+                // Use dummy data for testing
+                useDummyData();
+            }
+        }
+
+        // Use dummy data for testing
+        function useDummyData() {
+            const dummyData = {
+                '10 IPA 1': {
+                    senin: [
+                        { id: 1, time: '07:00 - 08:30', subject: 'Matematika', teacher: 'Bu Siti', room: 'R.101', color: 'blue' },
+                        { id: 2, time: '08:30 - 10:00', subject: 'Bahasa Indonesia', teacher: 'Pak Budi', room: 'R.102', color: 'green' }
+                    ],
+                    selasa: [
+                        { id: 3, time: '07:00 - 08:30', subject: 'Kimia', teacher: 'Bu Rina', room: 'Lab Kimia', color: 'red' }
+                    ]
+                }
+            };
+            allSchedules = dummyData;
+            renderSchedules(dummyData);
+            document.getElementById('scheduleCount').textContent = 'Total: 3 jadwal (data dummy)';
+        }
+
+        // Filter schedules based on search
+        function filterSchedules() {
+            const searchTerm = document.getElementById('searchSchedule').value.toLowerCase();
+            if (!searchTerm) {
+                renderSchedules(allSchedules);
+                return;
+            }
+            
+            const filtered = {};
+            Object.keys(allSchedules).forEach(className => {
+                Object.keys(allSchedules[className]).forEach(day => {
+                    allSchedules[className][day].forEach(item => {
+                        if (item.subject.toLowerCase().includes(searchTerm) ||
+                            item.teacher.toLowerCase().includes(searchTerm)) {
+                            if (!filtered[className]) filtered[className] = {};
+                            if (!filtered[className][day]) filtered[className][day] = [];
+                            filtered[className][day].push(item);
+                        }
+                    });
+                });
+            });
+            
+            renderSchedules(filtered);
+        }
+
+        // Render schedules table
+        function renderSchedules(schedules) {
+            const tbody = document.getElementById('schedulesTable');
+            let html = '';
+            let total = 0;
+            
+            Object.keys(schedules).forEach(className => {
+                Object.keys(schedules[className]).forEach(day => {
+                    schedules[className][day].forEach(item => {
+                        total++;
+                        html += `
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-3 px-4">${className}</td>
+                                <td class="py-3 px-4 capitalize">${day}</td>
+                                <td class="py-3 px-4">${item.time}</td>
+                                <td class="py-3 px-4">${item.subject}</td>
+                                <td class="py-3 px-4">${item.teacher}</td>
+                                <td class="py-3 px-4">${item.room}</td>
+                                <td class="py-3 px-4">
+                                    <button onclick="editSchedule(${item.id})" class="text-blue-600 hover:text-blue-800 mr-3">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="showDeleteModal(${item.id})" class="text-red-600 hover:text-red-800">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                });
+            });
+            
+            if (total === 0) {
+                html = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-gray-400">
+                            <i class="fas fa-calendar-times text-2xl mb-2"></i>
+                            <p>Belum ada jadwal</p>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            tbody.innerHTML = html;
+            document.getElementById('totalSchedules').textContent = total;
+            document.getElementById('scheduleCount').textContent = `Total: ${total} jadwal`;
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('filterClass').value = '';
+            document.getElementById('filterDay').value = 'all';
+            document.getElementById('searchSchedule').value = '';
+            loadSchedules();
+        }
+
+        // Refresh data
+        function refreshData() {
+            loadSchedules();
+            loadStats();
+            showNotification('Data berhasil diperbarui', 'success');
+        }
+
+        // Load stats
+        async function loadStats() {
+            try {
+                // Load teachers count
+// Load teachers count + isi dropdown Guru & Mata Pelajaran
+const teachersRes = await fetch('/api/schedule/teachers');
+const teachersData = await teachersRes.json();
+if (teachersData.success) {
+    document.getElementById('totalTeachers').textContent = teachersData.teachers.length;
+
+    // Isi dropdown Guru
+    const teacherSelect = document.getElementById('teacher');
+    const currentTeacher = teacherSelect.value;
+    teacherSelect.innerHTML = '<option value="">Pilih Guru</option>';
+    teachersData.teachers.forEach(t => {
+        teacherSelect.innerHTML += `<option value="${t.name}" data-subject="${t.subject}">${t.name}</option>`;
+    });
+    if (currentTeacher) teacherSelect.value = currentTeacher;
+
+    // Isi dropdown Mata Pelajaran dari daftar mapel unik tiap guru
+    const subjectSelect = document.getElementById('subject');
+    const currentSubject = subjectSelect.value;
+    const uniqueSubjects = [...new Set(teachersData.teachers.map(t => t.subject))].sort();
+    subjectSelect.innerHTML = '<option value="">Pilih Mata Pelajaran</option>';
+    uniqueSubjects.forEach(subj => {
+        subjectSelect.innerHTML += `<option value="${subj}">${subj}</option>`;
+    });
+    if (currentSubject) subjectSelect.value = currentSubject;
+
+    // Kalau pilih Guru, Mata Pelajaran otomatis ikut terpilih sesuai guru itu
+    teacherSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const subject = selectedOption.getAttribute('data-subject');
+        if (subject) subjectSelect.value = subject;
+    });
+}
+
+// Load rooms count + isi dropdown Ruangan
+const roomsRes = await fetch('/api/schedule/rooms');
+const roomsData = await roomsRes.json();
+if (roomsData.success) {
+    document.getElementById('totalRooms').textContent = roomsData.rooms.length;
+
+    // Isi dropdown Ruangan
+    const roomSelect = document.getElementById('room');
+    const currentRoom = roomSelect.value;
+    roomSelect.innerHTML = '<option value="">Pilih Ruangan</option>';
+    roomsData.rooms.forEach(r => {
+        roomSelect.innerHTML += `<option value="${r.name}">${r.name}</option>`;
+    });
+    if (currentRoom) roomSelect.value = currentRoom;
+}
+                
+                // Load classes count
+                const classesRes = await fetch('/api/schedule/classes');
+                const classesData = await classesRes.json();
+                if (classesData.success) {
+                    document.getElementById('totalClasses').textContent = classesData.classes.length;
+                    
+                    // Update class filter
+                    const select = document.getElementById('filterClass');
+                    select.innerHTML = '<option value="">Semua Kelas</option>';
+                    classesData.classes.forEach(cls => {
+                        select.innerHTML += `<option value="${cls}">${cls}</option>`;
+                    });
+
+                    // Update class dropdown in the "Tambah Jadwal" form
+                    const classNameSelect = document.getElementById('class_name');
+                    const currentValue = classNameSelect.value;
+                    classNameSelect.innerHTML = '<option value="">Pilih Kelas</option>';
+                    classesData.classes.forEach(cls => {
+                        classNameSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+                    });
+                    if (currentValue) classNameSelect.value = currentValue;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Dummy data
+                document.getElementById('totalTeachers').textContent = '5';
+                document.getElementById('totalRooms').textContent = '8';
+                document.getElementById('totalClasses').textContent = '6';
+            }
+        }
+
+        // Show add schedule modal
+function showAddScheduleModal() {
+    document.getElementById('modalTitle').textContent = 'Tambah Jadwal';
+    document.getElementById('scheduleForm').reset();
+    document.getElementById('scheduleId').value = '';
+    openModal('scheduleModal');
+}
+
+        // Show add teacher modal
+        // Show add room modal
+        function showAddRoomModal() {
+            document.getElementById('roomForm').reset();
+            openModal('roomModal');
+        }
+
+        // Show add class modal
+        function showAddClassModal() {
+            document.getElementById('classForm').reset();
+            openModal('classModal');
+        }
+
+        // Edit schedule
+        function editSchedule(id) {
+            alert('Fitur edit akan segera tersedia. ID: ' + id);
+        }
+
+        // Show delete modal
+        function showDeleteModal(id) {
+            document.getElementById('deleteId').value = id;
+            openModal('deleteModal');
+        }
+
+        // Confirm delete
+        async function confirmDelete() {
+            const id = document.getElementById('deleteId').value;
+            
+            try {
+                const response = await fetch(`/api/schedule/delete/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('deleteModal');
+                    loadSchedules();
+                    showNotification('Jadwal berhasil dihapus', 'success');
+                }
+            } catch (error) {
+                console.error('Error deleting schedule:', error);
+                closeModal('deleteModal');
+                loadSchedules(); // Refresh with dummy
+                showNotification('Jadwal berhasil dihapus (simulasi)', 'success');
+            }
+        }
+
+        // Schedule form submit
+        document.getElementById('scheduleForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const timeStart = document.getElementById('timeStart').value;
+const timeEnd = document.getElementById('timeEnd').value;
+if (timeStart && timeEnd && timeStart >= timeEnd) {
+    showNotification('Waktu selesai harus lebih besar dari waktu mulai', 'error');
+    return;
+}
+            
+            const data = {
+    class_name: document.getElementById('class_name').value,
+    day: document.getElementById('day').value,
+    time: `${timeStart} - ${timeEnd}`,
+                subject: document.getElementById('subject').value,
+                teacher: document.getElementById('teacher').value,
+                room: document.getElementById('room').value,
+                color: document.getElementById('color').value
+            };
+            
+            try {
+                const response = await fetch('/api/schedule/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('scheduleModal');
+                    loadSchedules();
+                    showNotification('Jadwal berhasil ditambahkan', 'success');
+                }
+            } catch (error) {
+                console.error('Error adding schedule:', error);
+                closeModal('scheduleModal');
+                loadSchedules(); // Refresh with dummy
+                showNotification('Jadwal berhasil ditambahkan (simulasi)', 'success');
+            }
+        });
+
+        // Teacher form submit
+        // Room form submit
+        document.getElementById('roomForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = {
+                name: document.getElementById('roomName').value,
+                capacity: document.getElementById('capacity').value
+            };
+            
+            try {
+                const response = await fetch('/api/schedule/rooms/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('roomModal');
+                    loadStats();
+                    showNotification('Ruangan berhasil ditambahkan', 'success');
+                }
+            } catch (error) {
+                console.error('Error adding room:', error);
+                closeModal('roomModal');
+                showNotification('Ruangan berhasil ditambahkan (simulasi)', 'success');
+            }
+        });
+
+        // Class form submit
+        document.getElementById('classForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const data = { name: document.getElementById('className').value.trim() };
+
+            try {
+                const response = await fetch('/api/schedule/classes/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('classModal');
+                    loadStats();
+                    showNotification('Kelas berhasil ditambahkan', 'success');
+                } else {
+                    showNotification(result.error || 'Gagal menambahkan kelas', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding class:', error);
+                showNotification('Gagal menambahkan kelas', 'error');
+            }
+        });
+
+        // Export to CSV
+        function exportScheduleToCSV() {
+            let csvContent = "Kelas,Hari,Waktu,Mata Pelajaran,Guru,Ruangan\n";
+            
+            Object.keys(allSchedules).forEach(className => {
+                Object.keys(allSchedules[className]).forEach(day => {
+                    allSchedules[className][day].forEach(item => {
+                        csvContent += `${className},${day},${item.time},${item.subject},${item.teacher},${item.room}\n`;
+                    });
+                });
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `jadwal_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Modal functions
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-3"></i>
+                    ${message}
+                </div>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

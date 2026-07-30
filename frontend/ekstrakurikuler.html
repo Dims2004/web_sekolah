@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ekstrakurikuler - SMART SCHOOL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+    *{font-family:'Plus Jakarta Sans', sans-serif;}
+    body{background:#0b1024;}
+    .grad-text{background:linear-gradient(90deg,#38bdf8,#a78bfa,#fb923c);-webkit-background-clip:text;background-clip:text;color:transparent;}
+    .glow{position:absolute;border-radius:999px;filter:blur(90px);opacity:.35;pointer-events:none;}
+    .hero-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(6px);}
+    .ex-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);transition:all .3s ease;}
+    .ex-card:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.07);}
+    .btn-grad{background:linear-gradient(90deg,#38bdf8,#a78bfa);color:#fff;font-weight:700;border-radius:999px;padding:.9rem 1.75rem;display:inline-flex;align-items:center;gap:.6rem;transition:all .25s ease;}
+    .btn-grad:hover{transform:translateY(-2px);box-shadow:0 15px 30px rgba(56,189,248,.25);}
+    .stat-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);}
+    .nav-link{color:rgba(255,255,255,.7);font-weight:600;font-size:.875rem;position:relative;}
+    .nav-link.active{color:#fff;}
+    .nav-link.active::after{content:'';position:absolute;left:0;right:0;bottom:-18px;height:2px;background:linear-gradient(90deg,#38bdf8,#a78bfa);}
+    .loading-dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:#a78bfa;margin:0 3px;animation:bounce 1.4s infinite ease-in-out both;}
+    .loading-dots span:nth-child(1){animation-delay:-.32s;}
+    .loading-dots span:nth-child(2){animation-delay:-.16s;}
+    @keyframes bounce{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
+</style>
+</head>
+<body class="min-h-screen text-white relative overflow-x-hidden">
+
+<div class="glow" style="width:500px;height:500px;background:#38bdf8;top:-150px;right:-100px;"></div>
+<div class="glow" style="width:400px;height:400px;background:#a78bfa;top:300px;left:-150px;"></div>
+
+<!-- ============ NAVBAR ============ -->
+<nav class="relative z-20 border-b border-white/5">
+    <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white" style="background:linear-gradient(135deg,#4338ca,#0ea5e9);">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div>
+                <div class="font-extrabold leading-none text-sm">SMART SCHOOL</div>
+                <div class="text-[11px] text-white/50">Berkarakter, Berprestasi, Berkontribusi</div>
+            </div>
+        </a>
+        <div class="hidden md:flex items-center gap-8">
+<a href="index.html" class="nav-link">Beranda</a>
+            <a href="ekstrakurikuler.html" class="nav-link active">Ekstrakurikuler</a>
+        </div>
+        <a href="student.html" class="hero-card rounded-full px-4 py-2 text-sm font-semibold flex items-center gap-2">
+            <i class="fas fa-user-graduate"></i> Portal Siswa
+        </a>
+    </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="relative z-10 container mx-auto px-4 pt-14 pb-20 grid lg:grid-cols-3 gap-10 items-start">
+    <div class="lg:col-span-2">
+        <h1 class="text-5xl sm:text-6xl font-black leading-none mb-3">Ekstrakurikuler</h1>
+        <h2 class="text-2xl sm:text-3xl font-extrabold grad-text mb-6">Temukan. Kembangkan. Berkontribusi.</h2>
+        <p class="text-white/60 text-lg max-w-xl mb-8">Wadah untuk mengasah minat, mengembangkan bakat, dan membangun karakter melalui kegiatan positif di luar kelas.</p>
+        <a href="#daftar-ekskul" class="btn-grad">Gabung Sekarang <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="hero-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold">Mengapa Ikut Ekstrakurikuler?</h3>
+            <div class="w-8 h-8 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center flex-shrink-0"><i class="fas fa-star text-sm"></i></div>
+        </div>
+        <ul class="space-y-3 text-sm text-white/70">
+            <li class="flex items-center gap-3"><i class="fas fa-seedling text-sky-400 w-4"></i>Mengembangkan potensi diri</li>
+            <li class="flex items-center gap-3"><i class="fas fa-medal text-violet-400 w-4"></i>Menambah pengalaman berharga</li>
+            <li class="flex items-center gap-3"><i class="fas fa-people-group text-orange-400 w-4"></i>Membangun relasi dan teamwork</li>
+            <li class="flex items-center gap-3"><i class="fas fa-bolt text-sky-400 w-4"></i>Meningkatkan kepercayaan diri</li>
+            <li class="flex items-center gap-3"><i class="fas fa-certificate text-violet-400 w-4"></i>Prestasi dan sertifikat kegiatan</li>
+        </ul>
+    </div>
+</header>
+
+<!-- ============ EKSKUL GRID ============ -->
+<main id="daftar-ekskul" class="relative z-10 container mx-auto px-4 pb-16">
+    <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-extrabold">Apa Saja Ekstrakurikuler di SMART SCHOOL?</h2>
+    </div>
+
+    <div id="ekskulGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-16">
+        <div class="col-span-full text-center py-10">
+            <div class="inline-block loading-dots mb-3"><span></span><span></span><span></span></div>
+            <p class="text-white/50 text-sm">Memuat ekstrakurikuler...</p>
+        </div>
+    </div>
+
+    <!-- ============ STATS ============ -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+        <div class="stat-card rounded-2xl p-6 text-center">
+            <div class="text-3xl font-black grad-text" id="statTotalEkskul">0</div>
+            <div class="text-xs text-white/50 mt-1 uppercase tracking-wide">Pilihan Ekstrakurikuler</div>
+        </div>
+        <div class="stat-card rounded-2xl p-6 text-center">
+            <div class="text-3xl font-black grad-text" id="statTotalMembers">0</div>
+            <div class="text-xs text-white/50 mt-1 uppercase tracking-wide">Total Pendaftar</div>
+        </div>
+        <div class="stat-card rounded-2xl p-6 text-center">
+            <div class="text-3xl font-black grad-text" id="statMostPopular">-</div>
+            <div class="text-xs text-white/50 mt-1 uppercase tracking-wide">Paling Diminati</div>
+        </div>
+        <div class="stat-card rounded-2xl p-6 text-center">
+            <div class="text-3xl font-black grad-text" id="statTotalStudents">0</div>
+            <div class="text-xs text-white/50 mt-1 uppercase tracking-wide">Siswa Terdaftar</div>
+        </div>
+    </div>
+
+    <!-- ============ CTA BANNER ============ -->
+    <div class="hero-card rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div>
+            <p class="text-white/50 text-sm mb-1">"Ekstrakurikuler bukan hanya tentang kegiatan,</p>
+            <p class="font-bold text-lg">tapi tentang <span class="grad-text">perjalanan</span> menemukan versi terbaik dirimu."</p>
+        </div>
+        <a href="#daftar-ekskul" class="btn-grad flex-shrink-0"><i class="fas fa-paper-plane"></i> Jadilah Bagian dari Cerita Kita</a>
+    </div>
+</main>
+
+<footer class="relative z-10 border-t border-white/5 py-8">
+    <div class="container mx-auto px-4 text-center text-white/40 text-sm">
+        <p>&copy; 2026 SMART SCHOOL. Semua hak dilindungi.</p>
+    </div>
+</footer>
+
+<script>
+    async function loadEkskulGrid() {
+        const grid = document.getElementById('ekskulGrid');
+        try {
+            const response = await fetch('/api/extracurriculars');
+            const data = await response.json();
+
+            if (!data.success || data.extracurriculars.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-white/40 py-10">Belum ada data ekstrakurikuler.</p>';
+                updateStats([]);
+                return;
+            }
+
+            grid.innerHTML = data.extracurriculars.map(function (ex) {
+                const thumb = ex.photo
+                    ? '<img src="' + ex.photo + '" class="w-16 h-16 rounded-xl object-cover mx-auto mb-4">'
+                    : '<div class="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center text-2xl" style="background:linear-gradient(135deg,#38bdf8,#a78bfa);"><i class="fas ' + ex.icon + '"></i></div>';
+
+                return '<div class="ex-card rounded-2xl p-6 text-center flex flex-col">' +
+                    thumb +
+                    '<h3 class="font-bold text-lg mb-1">' + ex.name + '</h3>' +
+                    '<p class="text-white/50 text-xs mb-4 flex-1">' + (ex.description || '') + '</p>' +
+                    '<div class="text-sky-400 font-bold text-sm mb-4">' + ex.member_count + ' <span class="text-white/40 font-normal">Anggota</span></div>' +
+                    '<a href="ekskul-register.html?ekskul=' + encodeURIComponent(ex.name) + '" class="btn-grad justify-center text-sm !py-2.5"><i class="fas fa-user-plus"></i> Daftar</a>' +
+                    '</div>';
+            }).join('');
+
+            updateStats(data.extracurriculars);
+        } catch (error) {
+            console.error('Error loading extracurriculars:', error);
+            grid.innerHTML = '<p class="col-span-full text-center text-white/40 py-10">Gagal memuat data ekstrakurikuler.</p>';
+        }
+    }
+
+    function updateStats(list) {
+        document.getElementById('statTotalEkskul').textContent = list.length;
+        const totalMembers = list.reduce(function (sum, ex) { return sum + (ex.member_count || 0); }, 0);
+        document.getElementById('statTotalMembers').textContent = totalMembers;
+
+        let mostPopular = '-';
+        if (list.length > 0) {
+            const top = list.reduce(function (a, b) { return (b.member_count || 0) > (a.member_count || 0) ? b : a; });
+            mostPopular = (top.member_count || 0) > 0 ? top.name : '-';
+        }
+        document.getElementById('statMostPopular').textContent = mostPopular;
+    }
+
+    async function loadTotalStudents() {
+        try {
+            const response = await fetch('/api/students');
+            const data = await response.json();
+            if (data.success) document.getElementById('statTotalStudents').textContent = data.total;
+        } catch (error) {
+            console.error('Error loading total students:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadEkskulGrid();
+        loadTotalStudents();
+    });
+</script>
+</body>
+</html>

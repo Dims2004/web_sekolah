@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jadwal Pelajaran - E-Absensi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/schedule.css">
+
+</head>
+<body class="bg-gray-50 min-h-screen">
+<div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8 flex justify-between items-center">
+            <a href="student.html" class="inline-flex items-center text-purple-600 hover:text-purple-800">
+                <i class="fas fa-arrow-left mr-2"></i> Kembali ke Halaman Siswa
+            </a>
+            <div class="text-right">
+                <div id="currentDate" class="text-lg font-semibold text-gray-700"></div>
+                <div id="currentSemester" class="text-sm text-gray-500">Semester Genap 2024/2025</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-6xl mx-auto">
+            <!-- Title -->
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-bold text-gray-800 mb-3">
+                    <i class="fas fa-calendar-alt mr-3 text-purple-600"></i>
+                    Jadwal Pelajaran
+                </h1>
+                <p class="text-gray-600 text-lg">
+                    Kelola dan lihat jadwal pelajaran harian
+                </p>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white rounded-xl shadow p-4 text-center">
+                    <div class="text-2xl font-bold text-purple-600" id="totalSubjects">0</div>
+                    <div class="text-gray-600 text-sm">Total Mapel</div>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 text-center">
+                    <div class="text-2xl font-bold text-green-600" id="todayClasses">0</div>
+                    <div class="text-gray-600 text-sm">Mapel Hari Ini</div>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 text-center">
+                    <div class="text-2xl font-bold text-indigo-600" id="totalHours">0</div>
+                    <div class="text-gray-600 text-sm">Jam/Minggu</div>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 text-center">
+                    <div class="text-2xl font-bold text-yellow-600" id="totalTeachers">0</div>
+                    <div class="text-gray-600 text-sm">Total Guru</div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="bg-white rounded-xl shadow p-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Cari Jadwal</label>
+                        <div class="relative">
+                            <input type="text" id="searchSchedule" placeholder="Cari mata pelajaran atau guru..." 
+                                   class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Pilih Kelas</label>
+                        <select id="classFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">Memuat kelas...</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end space-x-3">
+                        <button onclick="scheduleManager.printSchedule('full')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">
+                            <i class="fas fa-print mr-2"></i> Cetak
+                        </button>
+                        <button onclick="scheduleManager.exportToCSV()" class="flex-1 bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-lg">
+                            <i class="fas fa-file-export mr-2"></i> Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day Tabs -->
+            <div class="bg-white rounded-xl shadow mb-8">
+                <div class="flex overflow-x-auto p-2 space-x-2">
+                    <button onclick="scheduleManager.filterDay('all')" class="day-tab px-6 py-3 rounded-lg font-medium transition flex-shrink-0 bg-purple-600 text-white" id="tab-all">
+                        <i class="fas fa-calendar-week mr-2"></i>Semua
+                    </button>
+                    <button onclick="scheduleManager.filterDay('senin')" class="day-tab px-6 py-3 rounded-lg font-medium transition flex-shrink-0 bg-gray-100 text-gray-700" id="tab-senin">
+                        <i class="fas fa-sun mr-2"></i>Senin
+                    </button>
+                    <button onclick="scheduleManager.filterDay('selasa')" class="day-tab px-6 py-3 rounded-lg font-medium transition flex-shrink-0 bg-gray-100 text-gray-700" id="tab-selasa">
+                        <i class="fas fa-cloud mr-2"></i>Selasa
+                    </button>
+                    <button onclick="scheduleManager.filterDay('rabu')" class="day-tab px-6 py-3 rounded-lg font-medium transition flex-shrink-0 bg-gray-100 text-gray-700" id="tab-rabu">
+                        <i class="fas fa-cloud-rain mr-2"></i>Rabu
+                    </button>
+                    <button onclick="scheduleManager.filterDay('kamis')" class="day-tab px-6 py-3 rounded-lg font-medium transition flex-shrink-0 bg-gray-100 text-gray-700" id="tab-kamis">
+                        <i class="fas fa-cloud-sun mr-2"></i>Kamis
+                    </button>
+                    <button onclick="scheduleManager.filterDay('jumat')" class="day-tab px-6 py-3 rounded-lg font-medium transition flex-shrink-0 bg-gray-100 text-gray-700" id="tab-jumat">
+                        <i class="fas fa-sun mr-2"></i>Jumat
+                    </button>
+                    <button onclick="scheduleManager.filterDay('sabtu')" class="day-tab px-6 py-3 rounded-lg font-medium transition flex-shrink-0 bg-gray-100 text-gray-700" id="tab-sabtu">
+                        <i class="fas fa-moon mr-2"></i>Sabtu
+                    </button>
+                </div>
+            </div>
+
+            <!-- Schedule Grid -->
+            <div id="scheduleContainer" class="space-y-6">
+                <div class="schedule-loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="bg-white rounded-xl shadow p-6 mt-8">
+                <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-purple-600 mr-2"></i>
+                    Keterangan
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-blue-500 rounded-full mr-2"></span>
+                        <span class="text-sm text-gray-600">Matematika</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-green-500 rounded-full mr-2"></span>
+                        <span class="text-sm text-gray-600">Bahasa Indonesia</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-purple-500 rounded-full mr-2"></span>
+                        <span class="text-sm text-gray-600">Bahasa Inggris</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-yellow-500 rounded-full mr-2"></span>
+                        <span class="text-sm text-gray-600">Fisika/Kimia</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-red-500 rounded-full mr-2"></span>
+                        <span class="text-sm text-gray-600">Sejarah/Ekonomi</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-indigo-500 rounded-full mr-2"></span>
+                        <span class="text-sm text-gray-600">Olahraga</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-pink-500 rounded-full mr-2"></span>
+                        <span class="text-sm text-gray-600">Seni Budaya</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-teal-500 rounded-full mr-2"></span>
+                        <span class="text-sm text-gray-600">Agama/PKN</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>© 2026 SMART SCHOOL - Jadwal Pelajaran</p>
+        </footer>
+    </div>
+
+    <script src="js/schedule.js"></script>
+</body>
+</html>

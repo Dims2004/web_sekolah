@@ -1,0 +1,175 @@
+/* Schedule Page Specific Styles */
+
+:root {
+    --schedule-primary: #8b5cf6;
+    --schedule-secondary: #7c3aed;
+    --schedule-accent: #6d28d9;
+}
+
+/* Schedule Card Animations */
+.schedule-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.schedule-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.schedule-card:hover::before {
+    left: 100%;
+}
+
+.schedule-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 20px 30px rgba(139, 92, 246, 0.2);
+}
+
+/* Day Tabs */
+.day-tab {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.day-tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: white;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.day-tab:hover::after {
+    width: 80%;
+}
+
+.day-tab.active {
+    background: linear-gradient(135deg, var(--schedule-primary), var(--schedule-secondary));
+    color: white;
+    transform: scale(1.05);
+}
+
+/* Time Badge */
+.time-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* Room Badge */
+.room-badge {
+    background: #e5e7eb;
+    color: #4b5563;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+}
+
+/* Teacher Info */
+.teacher-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.teacher-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+}
+
+/* Loading Animation */
+.schedule-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e5e7eb;
+    border-top-color: var(--schedule-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .schedule-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        border: 1px solid #ddd;
+        box-shadow: none;
+    }
+    
+    .day-tab {
+        background: none !important;
+        color: black !important;
+    }
+}
+
+/* Color Classes for Subjects */
+.subject-matematika { background: #dbeafe; color: #1e40af; }
+.subject-bahasa-indonesia { background: #dcfce7; color: #166534; }
+.subject-bahasa-inggris { background: #f3e8ff; color: #6b21a8; }
+.subject-fisika { background: #fef9c3; color: #854d0e; }
+.subject-kimia { background: #fee2e2; color: #991b1b; }
+.subject-biologi { background: #ccfbf1; color: #115e59; }
+.subject-sejarah { background: #ffe4e6; color: #9f1239; }
+.subject-geografi { background: #ffedd5; color: #9a3412; }
+.subject-ekonomi { background: #e0f2fe; color: #0369a1; }
+.subject-sosiologi { background: #f1f5f9; color: #334155; }
+.subject-agama { background: #fae8ff; color: #86198f; }
+.subject-pkn { background: #fef3c7; color: #92400e; }
+.subject-seni-budaya { background: #fce7f3; color: #9d174d; }
+.subject-prakarya { background: #d9f99d; color: #3f6212; }
+.subject-olahraga { background: #cffafe; color: #0891b2; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .schedule-card {
+        margin-bottom: 16px;
+    }
+    
+    .day-tab {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+}
