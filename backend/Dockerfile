@@ -29,6 +29,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy backend code and the frontend (Flask serves the frontend as static files)
 COPY backend/ ./backend
 COPY frontend/ ./frontend
+COPY database/ ./database
 
 WORKDIR /app/backend
 
