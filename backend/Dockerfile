@@ -18,21 +18,15 @@ WORKDIR /app
 
 COPY backend/requirements.txt ./requirements.txt
 
-# Upgrade pip itself first, then install numpy/scipy before mediapipe so pip
-# does not have to backtrack across mediapipe's own opencv-contrib-python
-# dependency and a separately pinned opencv package (this was causing very
-# long / failing resolves).
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --default-timeout=1000 "numpy>=1.23,<2" "scipy>=1.10,<1.12" && \
     pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
 
-# Copy backend code and the frontend (Flask serves the frontend as static files)
 COPY backend/ ./backend
 COPY frontend/ ./frontend
 
 WORKDIR /app/backend
 
-# Database lives in /app/database so it can be mounted as a volume
 RUN mkdir -p /app/database
 
 EXPOSE 5000
