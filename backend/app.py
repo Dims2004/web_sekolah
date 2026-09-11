@@ -1,7 +1,6 @@
 import os
 from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
-import sqlite3
 import cv2
 import numpy as np
 import mediapipe as mp
@@ -12,33 +11,20 @@ import base64
 import json
 import platform
 import sys
+from db import get_db_connection, IS_POSTGRES, DATABASE_PATH, year_expr, to_binary
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
 
-IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ
-
-if IS_PYTHONANYWHERE:
-    DEBUG = False
-    print("✅ Running in PythonAnywhere production mode")
+DEBUG = not IS_POSTGRES
+if IS_POSTGRES:
+    print("✅ Running in production mode (PostgreSQL)")
 else:
-    DEBUG = True
-    print("✅ Running in local development mode")
+    print("✅ Running in local development mode (SQLite)")
 
 app.register_blueprint(schedule_bp)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-if IS_PYTHONANYWHERE:
-    DATABASE_DIR = os.path.join(BASE_DIR, 'database')
-else:
-    DATABASE_DIR = os.path.join(BASE_DIR, '..', 'database')
-
-DATABASE_PATH = os.path.join(DATABASE_DIR, 'students.db')
-
-if not os.path.exists(DATABASE_DIR):
-    os.makedirs(DATABASE_DIR)
-    print(f"✅ Created database directory: {DATABASE_DIR}")
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
@@ -60,7 +46,7 @@ def admin_required(f):
 def get_teacher_by_token(token):
     """Cari data guru dari token sesi mereka (diset saat /api/schedule/teachers/login)."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT id, name, homeroom_class FROM teachers WHERE token = ?", (token,))
         row = c.fetchone()
@@ -99,241 +85,373 @@ print("🔄 Initializing MediaPipe...")
 mp_face_detection = mp.solutions.face_detection
 mp_face_mesh = mp.solutions.face_mesh
 
-def init_db():
+def _init_db_postgres(conn):
+    """Skema PostgreSQL bersih. Karena ini database baru, tidak perlu blok
+    migrasi ALTER TABLE seperti di versi SQLite - semua kolom langsung ada
+    dari awal."""
+    c = conn.cursor()
+
+    c.execute('''CREATE TABLE IF NOT EXISTS students
+                 (id SERIAL PRIMARY KEY,
+                  nis TEXT UNIQUE NOT NULL,
+                  name TEXT NOT NULL,
+                  class TEXT NOT NULL,
+                  face_embedding BYTEA,
+                  profile_photo TEXT,
+                  registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS attendance
+                 (id SERIAL PRIMARY KEY,
+                  student_id INTEGER,
+                  nis TEXT,
+                  name TEXT,
+                  class TEXT,
+                  status TEXT DEFAULT 'hadir',
+                  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS leave_requests
+                 (id SERIAL PRIMARY KEY,
+                  nis TEXT NOT NULL,
+                  student_name TEXT NOT NULL,
+                  class TEXT NOT NULL,
+                  leave_type TEXT NOT NULL,
+                  leave_date TEXT NOT NULL,
+                  reason TEXT,
+                  doctor_note TEXT,
+                  status TEXT DEFAULT 'pending',
+                  reviewed_by TEXT,
+                  reviewed_at TIMESTAMP,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS attendance_overrides
+                 (id SERIAL PRIMARY KEY,
+                  nis TEXT NOT NULL,
+                  att_date TEXT NOT NULL,
+                  status TEXT NOT NULL,
+                  note TEXT,
+                  updated_by TEXT,
+                  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(nis, att_date))''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS admissions
+                 (id SERIAL PRIMARY KEY,
+                  registration_no TEXT UNIQUE NOT NULL,
+                  full_name TEXT NOT NULL,
+                  nik TEXT,
+                  birth_place TEXT,
+                  birth_date TEXT,
+                  gender TEXT,
+                  address TEXT,
+                  parent_name TEXT,
+                  phone TEXT,
+                  previous_school TEXT,
+                  target_class TEXT,
+                  extracurricular TEXT,
+                  photo TEXT,
+                  payment_amount INTEGER DEFAULT 100000,
+                  status TEXT DEFAULT 'pending',
+                  status_note TEXT,
+                  status_updated_at TIMESTAMP,
+                  converted_student_id INTEGER,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS admission_documents
+                 (id SERIAL PRIMARY KEY,
+                  admission_id INTEGER NOT NULL,
+                  doc_type TEXT NOT NULL,
+                  file_name TEXT,
+                  file_data TEXT,
+                  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(admission_id, doc_type))''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS school_info
+                 (id INTEGER PRIMARY KEY CHECK (id = 1),
+                  vision_mission TEXT,
+                  facilities TEXT,
+                  achievements TEXT,
+                  hours_weekday TEXT,
+                  hours_friday TEXT,
+                  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS extracurriculars
+                 (id SERIAL PRIMARY KEY,
+                  name TEXT NOT NULL,
+                  description TEXT,
+                  icon TEXT DEFAULT 'fa-star',
+                  photo TEXT,
+                  contact_name TEXT,
+                  contact_phone TEXT,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS announcements
+                 (id SERIAL PRIMARY KEY,
+                  title TEXT NOT NULL,
+                  description TEXT,
+                  image TEXT,
+                  link_url TEXT,
+                  audience TEXT DEFAULT 'all',
+                  is_pinned INTEGER DEFAULT 0,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS ekskul_registrations
+                 (id SERIAL PRIMARY KEY,
+                  registration_no TEXT UNIQUE,
+                  ekskul_name TEXT NOT NULL,
+                  full_name TEXT NOT NULL,
+                  class TEXT NOT NULL,
+                  phone TEXT NOT NULL,
+                  note TEXT,
+                  contact_name TEXT,
+                  contact_phone TEXT,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute("SELECT COUNT(*) FROM school_info WHERE id = 1")
+    if c.fetchone()[0] == 0:
+        c.execute('''INSERT INTO school_info
+                     (id, vision_mission, facilities, achievements, hours_weekday, hours_friday)
+                     VALUES (1, ?, ?, ?, ?, ?)''', (
+            'Mewujudkan sekolah unggul berbasis teknologi yang menghasilkan generasi berkarakter dan berkompetensi global.',
+            'Laboratorium Computer Vision\nRuang Kelas Ber-AC\nPerpustakaan Digital\nLapangan Olahraga\nWi-Fi Area Sekolah',
+            'Juara 1 Lomba Inovasi Teknologi Pendidikan Tingkat Nasional 2023',
+            '07:00 - 15:00',
+            '07:00 - 11:30'
+        ))
+
+    conn.commit()
+
+
+def _init_db_sqlite(conn):
+    """Skema SQLite asli, dipertahankan apa adanya (termasuk migrasi ALTER
+    TABLE-nya) supaya development lokal tanpa DATABASE_URL tetap jalan persis
+    seperti sebelumnya."""
+    import sqlite3
+    c = conn.cursor()
+
+    c.execute('''CREATE TABLE IF NOT EXISTS students
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  nis TEXT UNIQUE NOT NULL,
+                  name TEXT NOT NULL,
+                  class TEXT NOT NULL,
+                  face_embedding BLOB,
+                  profile_photo TEXT,
+                  registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
     try:
-        print(f"🔄 Initializing database at: {DATABASE_PATH}")
-        
-        conn = sqlite3.connect(DATABASE_PATH)
-        c = conn.cursor()
-        
-        c.execute('''CREATE TABLE IF NOT EXISTS students
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      nis TEXT UNIQUE NOT NULL,
-                      name TEXT NOT NULL,
-                      class TEXT NOT NULL,
-                      face_embedding BLOB,
-                      profile_photo TEXT,
-                      registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+        c.execute("PRAGMA table_info(students)")
+        student_cols = [col[1] for col in c.fetchall()]
+        if 'profile_photo' not in student_cols:
+            c.execute("ALTER TABLE students ADD COLUMN profile_photo TEXT")
+    except sqlite3.OperationalError as e:
+        if 'duplicate column' not in str(e).lower():
+            raise
 
-        # Migrasi ringan untuk database lama sebelum kolom profile_photo ada
-        try:
-            c.execute("PRAGMA table_info(students)")
-            student_cols = [col[1] for col in c.fetchall()]
-            if 'profile_photo' not in student_cols:
-                c.execute("ALTER TABLE students ADD COLUMN profile_photo TEXT")
-        except sqlite3.OperationalError as e:
-            if 'duplicate column' not in str(e).lower():
-                raise
-        
-        c.execute('''CREATE TABLE IF NOT EXISTS attendance
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      student_id INTEGER,
-                      nis TEXT,
-                      name TEXT,
-                      class TEXT,
-                      status TEXT DEFAULT 'hadir',
-                      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS attendance
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  student_id INTEGER,
+                  nis TEXT,
+                  name TEXT,
+                  class TEXT,
+                  status TEXT DEFAULT 'hadir',
+                  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
-        # Migrasi ringan untuk database lama sebelum kolom status ada
-        try:
-            c.execute("PRAGMA table_info(attendance)")
-            att_cols = [col[1] for col in c.fetchall()]
-            if 'status' not in att_cols:
-                c.execute("ALTER TABLE attendance ADD COLUMN status TEXT DEFAULT 'hadir'")
-        except sqlite3.OperationalError as e:
-            if 'duplicate column' not in str(e).lower():
-                raise
+    try:
+        c.execute("PRAGMA table_info(attendance)")
+        att_cols = [col[1] for col in c.fetchall()]
+        if 'status' not in att_cols:
+            c.execute("ALTER TABLE attendance ADD COLUMN status TEXT DEFAULT 'hadir'")
+    except sqlite3.OperationalError as e:
+        if 'duplicate column' not in str(e).lower():
+            raise
 
-        # Pengajuan izin/sakit dari siswa, perlu disetujui guru yang mengajar kelas itu
-        c.execute('''CREATE TABLE IF NOT EXISTS leave_requests
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      nis TEXT NOT NULL,
-                      student_name TEXT NOT NULL,
-                      class TEXT NOT NULL,
-                      leave_type TEXT NOT NULL,
-                      leave_date TEXT NOT NULL,
-                      reason TEXT,
-                      doctor_note TEXT,
-                      status TEXT DEFAULT 'pending',
-                      reviewed_by TEXT,
-                      reviewed_at TIMESTAMP,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS leave_requests
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  nis TEXT NOT NULL,
+                  student_name TEXT NOT NULL,
+                  class TEXT NOT NULL,
+                  leave_type TEXT NOT NULL,
+                  leave_date TEXT NOT NULL,
+                  reason TEXT,
+                  doctor_note TEXT,
+                  status TEXT DEFAULT 'pending',
+                  reviewed_by TEXT,
+                  reviewed_at TIMESTAMP,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
-        # Migrasi untuk database lama yang dibuat sebelum kolom doctor_note ada
-        try:
-            c.execute("PRAGMA table_info(leave_requests)")
-            leave_cols = [col[1] for col in c.fetchall()]
-            if 'doctor_note' not in leave_cols:
-                c.execute("ALTER TABLE leave_requests ADD COLUMN doctor_note TEXT")
-        except sqlite3.OperationalError as e:
-            if 'duplicate column' not in str(e).lower():
-                raise
+    try:
+        c.execute("PRAGMA table_info(leave_requests)")
+        leave_cols = [col[1] for col in c.fetchall()]
+        if 'doctor_note' not in leave_cols:
+            c.execute("ALTER TABLE leave_requests ADD COLUMN doctor_note TEXT")
+    except sqlite3.OperationalError as e:
+        if 'duplicate column' not in str(e).lower():
+            raise
 
-        # Status absensi manual per siswa per tanggal (Alfa/Sakit/Izin/koreksi guru),
-        # menang/dipakai duluan dibanding data dari mesin pengenalan wajah.
-        c.execute('''CREATE TABLE IF NOT EXISTS attendance_overrides
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      nis TEXT NOT NULL,
-                      att_date TEXT NOT NULL,
-                      status TEXT NOT NULL,
-                      note TEXT,
-                      updated_by TEXT,
-                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      UNIQUE(nis, att_date))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS attendance_overrides
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  nis TEXT NOT NULL,
+                  att_date TEXT NOT NULL,
+                  status TEXT NOT NULL,
+                  note TEXT,
+                  updated_by TEXT,
+                  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(nis, att_date))''')
 
-        c.execute('''CREATE TABLE IF NOT EXISTS admissions
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      registration_no TEXT UNIQUE NOT NULL,
-                      full_name TEXT NOT NULL,
-                      nik TEXT,
-                      birth_place TEXT,
-                      birth_date TEXT,
-                      gender TEXT,
-                      address TEXT,
-                      parent_name TEXT,
-                      phone TEXT,
-                      previous_school TEXT,
-                      target_class TEXT,
-                      extracurricular TEXT,
-                      photo TEXT,
-                      payment_amount INTEGER DEFAULT 100000,
-                      status TEXT DEFAULT 'pending',
-                      status_note TEXT,
-                      status_updated_at TIMESTAMP,
-                      converted_student_id INTEGER,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS admissions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  registration_no TEXT UNIQUE NOT NULL,
+                  full_name TEXT NOT NULL,
+                  nik TEXT,
+                  birth_place TEXT,
+                  birth_date TEXT,
+                  gender TEXT,
+                  address TEXT,
+                  parent_name TEXT,
+                  phone TEXT,
+                  previous_school TEXT,
+                  target_class TEXT,
+                  extracurricular TEXT,
+                  photo TEXT,
+                  payment_amount INTEGER DEFAULT 100000,
+                  status TEXT DEFAULT 'pending',
+                  status_note TEXT,
+                  status_updated_at TIMESTAMP,
+                  converted_student_id INTEGER,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
+    try:
+        c.execute("PRAGMA table_info(admissions)")
+        adm_cols = [col[1] for col in c.fetchall()]
+        if 'converted_student_id' not in adm_cols:
+            c.execute("ALTER TABLE admissions ADD COLUMN converted_student_id INTEGER")
+    except sqlite3.OperationalError as e:
+        if 'duplicate column' not in str(e).lower():
+            raise
+
+    for col_name, col_type in [('status', "TEXT DEFAULT 'pending'"), ('status_note', 'TEXT'), ('status_updated_at', 'TIMESTAMP')]:
         try:
             c.execute("PRAGMA table_info(admissions)")
-            adm_cols = [col[1] for col in c.fetchall()]
-            if 'converted_student_id' not in adm_cols:
-                c.execute("ALTER TABLE admissions ADD COLUMN converted_student_id INTEGER")
+            cols = [col[1] for col in c.fetchall()]
+            if col_name not in cols:
+                c.execute(f"ALTER TABLE admissions ADD COLUMN {col_name} {col_type}")
         except sqlite3.OperationalError as e:
             if 'duplicate column' not in str(e).lower():
                 raise
 
-        # Migrasi ringan untuk database lama sebelum kolom status ada
-        for col_name, col_type in [('status', "TEXT DEFAULT 'pending'"), ('status_note', 'TEXT'), ('status_updated_at', 'TIMESTAMP')]:
-            try:
-                c.execute("PRAGMA table_info(admissions)")
-                cols = [col[1] for col in c.fetchall()]
-                if col_name not in cols:
-                    c.execute(f"ALTER TABLE admissions ADD COLUMN {col_name} {col_type}")
-            except sqlite3.OperationalError as e:
-                if 'duplicate column' not in str(e).lower():
-                    raise
+    c.execute('''CREATE TABLE IF NOT EXISTS admission_documents
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  admission_id INTEGER NOT NULL,
+                  doc_type TEXT NOT NULL,
+                  file_name TEXT,
+                  file_data TEXT,
+                  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(admission_id, doc_type))''')
 
-        c.execute('''CREATE TABLE IF NOT EXISTS admission_documents
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      admission_id INTEGER NOT NULL,
-                      doc_type TEXT NOT NULL,
-                      file_name TEXT,
-                      file_data TEXT,
-                      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      UNIQUE(admission_id, doc_type))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS school_info
+                 (id INTEGER PRIMARY KEY CHECK (id = 1),
+                  vision_mission TEXT,
+                  facilities TEXT,
+                  achievements TEXT,
+                  hours_weekday TEXT,
+                  hours_friday TEXT,
+                  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
-        c.execute('''CREATE TABLE IF NOT EXISTS school_info
-                     (id INTEGER PRIMARY KEY CHECK (id = 1),
-                      vision_mission TEXT,
-                      facilities TEXT,
-                      achievements TEXT,
-                      hours_weekday TEXT,
-                      hours_friday TEXT,
-                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS extracurriculars
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  name TEXT NOT NULL,
+                  description TEXT,
+                  icon TEXT DEFAULT 'fa-star',
+                  photo TEXT,
+                  contact_name TEXT,
+                  contact_phone TEXT,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
-        c.execute('''CREATE TABLE IF NOT EXISTS extracurriculars
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      name TEXT NOT NULL,
-                      description TEXT,
-                      icon TEXT DEFAULT 'fa-star',
-                      photo TEXT,
-                      contact_name TEXT,
-                      contact_phone TEXT,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS announcements
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  title TEXT NOT NULL,
+                  description TEXT,
+                  image TEXT,
+                  link_url TEXT,
+                  audience TEXT DEFAULT 'all',
+                  is_pinned INTEGER DEFAULT 0,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
-        # Announcements table (pengumuman/berita, tampil sebagai banner+kartu di dashboard)
-        c.execute('''CREATE TABLE IF NOT EXISTS announcements
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      title TEXT NOT NULL,
-                      description TEXT,
-                      image TEXT,
-                      link_url TEXT,
-                      audience TEXT DEFAULT 'all',
-                      is_pinned INTEGER DEFAULT 0,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS ekskul_registrations
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  registration_no TEXT UNIQUE,
+                  ekskul_name TEXT NOT NULL,
+                  full_name TEXT NOT NULL,
+                  class TEXT NOT NULL,
+                  phone TEXT NOT NULL,
+                  note TEXT,
+                  contact_name TEXT,
+                  contact_phone TEXT,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
-        # Ekskul registrations table (pendaftaran ekstrakurikuler, terpisah dari PPDB)
-        c.execute('''CREATE TABLE IF NOT EXISTS ekskul_registrations
-                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      registration_no TEXT UNIQUE,
-                      ekskul_name TEXT NOT NULL,
-                      full_name TEXT NOT NULL,
-                      class TEXT NOT NULL,
-                      phone TEXT NOT NULL,
-                      note TEXT,
-                      contact_name TEXT,
-                      contact_phone TEXT,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    try:
+        c.execute("PRAGMA table_info(extracurriculars)")
+        ex_columns = [col[1] for col in c.fetchall()]
+        if 'photo' not in ex_columns:
+            c.execute("ALTER TABLE extracurriculars ADD COLUMN photo TEXT")
+    except sqlite3.OperationalError as e:
+        if 'duplicate column' not in str(e).lower():
+            raise
 
-        # Migrasi ringan untuk database lama yang sudah ada sebelum kolom ini ditambahkan.
-        # Dibungkus try/except karena ada 2 worker gunicorn yang bisa menjalankan
-        # migrasi ini bersamaan saat startup - kalau salah satu sudah lebih dulu
-        # menambahkan kolomnya, worker lain akan dapat error "duplicate column"
-        # yang aman untuk diabaikan.
+    try:
+        c.execute("PRAGMA table_info(admissions)")
+        ad_columns = [col[1] for col in c.fetchall()]
+        if 'extracurricular' not in ad_columns:
+            c.execute("ALTER TABLE admissions ADD COLUMN extracurricular TEXT")
+    except sqlite3.OperationalError as e:
+        if 'duplicate column' not in str(e).lower():
+            raise
+
+    for col_name, col_type in [('contact_name', 'TEXT'), ('contact_phone', 'TEXT')]:
         try:
             c.execute("PRAGMA table_info(extracurriculars)")
-            ex_columns = [col[1] for col in c.fetchall()]
-            if 'photo' not in ex_columns:
-                c.execute("ALTER TABLE extracurriculars ADD COLUMN photo TEXT")
+            cols = [col[1] for col in c.fetchall()]
+            if col_name not in cols:
+                c.execute(f"ALTER TABLE extracurriculars ADD COLUMN {col_name} {col_type}")
         except sqlite3.OperationalError as e:
             if 'duplicate column' not in str(e).lower():
                 raise
 
+    for col_name, col_type in [('registration_no', 'TEXT'), ('contact_name', 'TEXT'), ('contact_phone', 'TEXT')]:
         try:
-            c.execute("PRAGMA table_info(admissions)")
-            ad_columns = [col[1] for col in c.fetchall()]
-            if 'extracurricular' not in ad_columns:
-                c.execute("ALTER TABLE admissions ADD COLUMN extracurricular TEXT")
+            c.execute("PRAGMA table_info(ekskul_registrations)")
+            cols = [col[1] for col in c.fetchall()]
+            if col_name not in cols:
+                c.execute(f"ALTER TABLE ekskul_registrations ADD COLUMN {col_name} {col_type}")
         except sqlite3.OperationalError as e:
             if 'duplicate column' not in str(e).lower():
                 raise
 
-        for col_name, col_type in [('contact_name', 'TEXT'), ('contact_phone', 'TEXT')]:
-            try:
-                c.execute("PRAGMA table_info(extracurriculars)")
-                cols = [col[1] for col in c.fetchall()]
-                if col_name not in cols:
-                    c.execute(f"ALTER TABLE extracurriculars ADD COLUMN {col_name} {col_type}")
-            except sqlite3.OperationalError as e:
-                if 'duplicate column' not in str(e).lower():
-                    raise
+    c.execute("SELECT COUNT(*) FROM school_info WHERE id = 1")
+    if c.fetchone()[0] == 0:
+        c.execute('''INSERT INTO school_info
+                     (id, vision_mission, facilities, achievements, hours_weekday, hours_friday)
+                     VALUES (1, ?, ?, ?, ?, ?)''', (
+            'Mewujudkan sekolah unggul berbasis teknologi yang menghasilkan generasi berkarakter dan berkompetensi global.',
+            'Laboratorium Computer Vision\nRuang Kelas Ber-AC\nPerpustakaan Digital\nLapangan Olahraga\nWi-Fi Area Sekolah',
+            'Juara 1 Lomba Inovasi Teknologi Pendidikan Tingkat Nasional 2023',
+            '07:00 - 15:00',
+            '07:00 - 11:30'
+        ))
 
-        for col_name, col_type in [('registration_no', 'TEXT'), ('contact_name', 'TEXT'), ('contact_phone', 'TEXT')]:
-            try:
-                c.execute("PRAGMA table_info(ekskul_registrations)")
-                cols = [col[1] for col in c.fetchall()]
-                if col_name not in cols:
-                    c.execute(f"ALTER TABLE ekskul_registrations ADD COLUMN {col_name} {col_type}")
-            except sqlite3.OperationalError as e:
-                if 'duplicate column' not in str(e).lower():
-                    raise
+    conn.commit()
 
-        c.execute("SELECT COUNT(*) FROM school_info WHERE id = 1")
-        if c.fetchone()[0] == 0:
-            c.execute('''INSERT INTO school_info
-                         (id, vision_mission, facilities, achievements, hours_weekday, hours_friday)
-                         VALUES (1, ?, ?, ?, ?, ?)''', (
-                'Mewujudkan sekolah unggul berbasis teknologi yang menghasilkan generasi berkarakter dan berkompetensi global.',
-                'Laboratorium Computer Vision\nRuang Kelas Ber-AC\nPerpustakaan Digital\nLapangan Olahraga\nWi-Fi Area Sekolah',
-                'Juara 1 Lomba Inovasi Teknologi Pendidikan Tingkat Nasional 2023',
-                '07:00 - 15:00',
-                '07:00 - 11:30'
-            ))
-        
-        conn.commit()
+
+def init_db():
+    try:
+        print(f"🔄 Initializing database ({'PostgreSQL' if IS_POSTGRES else 'SQLite: ' + DATABASE_PATH})")
+
+        conn = get_db_connection()
+        if IS_POSTGRES:
+            _init_db_postgres(conn)
+        else:
+            _init_db_sqlite(conn)
         conn.close()
         print("✅ Database initialized successfully!")
-        
+
     except Exception as e:
         print(f"❌ Error initializing database: {e}")
 
@@ -355,8 +473,8 @@ class FaceRecognizer:
         print("✅ Face Recognizer initialized!")
         
     def get_db_connection(self):
-        return sqlite3.connect(DATABASE_PATH)
-    
+        return get_db_connection()
+
     def extract_face_embedding(self, image):
         try:
             rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -432,7 +550,10 @@ class FaceRecognizer:
                     continue
                 
                 try:
-                    stored_embedding = pickle.loads(embedding_blob)
+                    # psycopg2 mengembalikan kolom BYTEA sebagai memoryview,
+                    # sqlite3 mengembalikan bytes - disamakan dulu ke bytes
+                    # supaya pickle.loads selalu jalan di kedua database.
+                    stored_embedding = pickle.loads(bytes(embedding_blob))
                     
                     if len(query_embedding) != len(stored_embedding):
                         continue
@@ -515,7 +636,7 @@ def admin_login():
 def admin_dashboard():
     """Dashboard data untuk admin"""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         
         c.execute("SELECT COUNT(*) FROM students")
@@ -613,7 +734,7 @@ def admin_dashboard():
 def admin_manage_students():
     """Get all students for management"""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         
         c.execute('''SELECT s.id, s.nis, s.name, s.class, s.registration_date,
@@ -665,7 +786,7 @@ def admin_edit_student(student_id):
         if not all([nis, name, student_class]):
             return jsonify({'success': False, 'error': 'NIS, nama, dan kelas wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
 
         c.execute("SELECT id FROM students WHERE id = ?", (student_id,))
@@ -693,7 +814,7 @@ def admin_edit_student(student_id):
 def admin_delete_student(student_id):
     """Delete a student"""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         
         c.execute("DELETE FROM attendance WHERE student_id = ?", (student_id,))
@@ -723,7 +844,7 @@ def admin_attendance_report():
         date_to = request.args.get('to', datetime.now().strftime('%Y-%m-%d'))
         class_filter = (request.args.get('class') or '').strip()
         
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         
         if class_filter:
@@ -792,7 +913,7 @@ def export_attendance():
         date_to = request.args.get('to', datetime.now().strftime('%Y-%m-%d'))
         class_filter = (request.args.get('class') or '').strip()
         
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         
         if class_filter:
@@ -896,7 +1017,7 @@ def submit_admission():
         if len(nik) != 16 or not nik.isdigit():
             return jsonify({'success': False, 'error': 'NIK harus terdiri dari 16 digit angka'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
 
         # Cegah pendaftaran ganda dengan NIK yang sama
@@ -945,7 +1066,7 @@ def submit_admission():
 def list_admissions():
     """Daftar pendaftar PPDB untuk ditinjau admin/guru."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''SELECT id, registration_no, full_name, nik, birth_place, birth_date,
                             gender, address, parent_name, phone, previous_school,
@@ -981,7 +1102,7 @@ def update_admission_status(admission_id):
         if status not in ('pending', 'diterima', 'ditolak', 'perlu_lengkapi_berkas'):
             return jsonify({'success': False, 'error': 'Status tidak valid'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT full_name, target_class, converted_student_id FROM admissions WHERE id = ?", (admission_id,))
         admission = c.fetchone()
@@ -1040,7 +1161,7 @@ def check_admission_status():
         if not reg_no and not nik:
             return jsonify({'success': False, 'error': 'Nomor pendaftaran atau NIK wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         if reg_no:
             c.execute('''SELECT registration_no, full_name, target_class, status, status_note,
@@ -1097,7 +1218,7 @@ def upload_admission_document():
         if not reg_no or not file_data:
             return jsonify({'success': False, 'error': 'Nomor pendaftaran dan file wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT id FROM admissions WHERE registration_no = ?", (reg_no,))
         admission = c.fetchone()
@@ -1128,7 +1249,7 @@ def get_admission_documents_public():
         if not reg_no:
             return jsonify({'success': False, 'error': 'Nomor pendaftaran wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT id, full_name FROM admissions WHERE registration_no = ?", (reg_no,))
         admission = c.fetchone()
@@ -1152,7 +1273,7 @@ def get_admission_documents_public():
 def get_admission_documents_admin(admission_id):
     """Lihat semua berkas satu pendaftar (buat validasi admin)."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''SELECT doc_type, file_name, file_data, uploaded_at FROM admission_documents WHERE admission_id = ?''',
                   (admission_id,))
@@ -1174,9 +1295,9 @@ def get_admission_documents_admin(admission_id):
 def get_admission_yearly_stats():
     """Rekap jumlah pendaftar PPDB per tahun, plus rincian statusnya."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
-        c.execute('''SELECT strftime('%Y', created_at) as year,
+        c.execute(f'''SELECT {year_expr('created_at')} as year,
                             COUNT(*) as total,
                             SUM(CASE WHEN status = 'diterima' THEN 1 ELSE 0 END) as accepted,
                             SUM(CASE WHEN status = 'ditolak' THEN 1 ELSE 0 END) as rejected,
@@ -1202,7 +1323,7 @@ def student_login():
         if not nis:
             return jsonify({'success': False, 'error': 'NIS wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT id, nis, name, class, registration_date, profile_photo FROM students WHERE nis = ?", (nis,))
         student = c.fetchone()
@@ -1244,7 +1365,7 @@ def student_history():
         if not nis:
             return jsonify({'success': False, 'error': 'NIS wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''SELECT timestamp, status FROM attendance WHERE nis = ? ORDER BY timestamp DESC LIMIT 60''', (nis,))
         att_rows = c.fetchall()
@@ -1300,7 +1421,7 @@ def student_attendance_summary():
         else:
             year, month = today.year, today.month
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT registration_date FROM students WHERE nis = ?", (nis,))
         row = c.fetchone()
@@ -1381,7 +1502,7 @@ def submit_leave_request():
         if leave_type == 'izin':
             doctor_note = ''
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT name, class FROM students WHERE nis = ?", (nis,))
         student = c.fetchone()
@@ -1411,7 +1532,7 @@ def get_student_leave_requests():
         if not nis:
             return jsonify({'success': False, 'error': 'NIS wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''SELECT id, leave_type, leave_date, reason, status, reviewed_by, reviewed_at, created_at,
                      (doctor_note IS NOT NULL AND doctor_note != '') as has_doctor_note
@@ -1435,7 +1556,7 @@ def get_leave_request_doctor_note(request_id):
     """Ambil lampiran surat keterangan dokter (base64) untuk satu pengajuan sakit,
     dipakai guru/admin saat meninjau pengajuan sebelum menyetujui."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT doctor_note, class, leave_date FROM leave_requests WHERE id = ?", (request_id,))
         row = c.fetchone()
@@ -1465,7 +1586,7 @@ def update_student_profile():
         if not nis or not name:
             return jsonify({'success': False, 'error': 'NIS dan nama wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT id FROM students WHERE nis = ?", (nis,))
         if not c.fetchone():
@@ -1493,7 +1614,7 @@ def update_student_profile_photo():
         if not nis or not photo:
             return jsonify({'success': False, 'error': 'NIS dan foto wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT id FROM students WHERE nis = ?", (nis,))
         if not c.fetchone():
@@ -1546,7 +1667,7 @@ def update_student_photo():
             conn.close()
             return jsonify({'success': False, 'error': 'NIS tidak ditemukan'}), 404
 
-        embedding_blob = pickle.dumps(embedding)
+        embedding_blob = to_binary(pickle.dumps(embedding))
         c.execute("UPDATE students SET face_embedding = ? WHERE nis = ?", (embedding_blob, nis))
         conn.commit()
         conn.close()
@@ -1561,7 +1682,7 @@ def update_student_photo():
 def get_school_info():
     """Info sekolah yang ditampilkan di beranda."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''SELECT vision_mission, facilities, achievements, hours_weekday, hours_friday, updated_at
                      FROM school_info WHERE id = 1''')
@@ -1600,7 +1721,7 @@ def update_school_info():
         hours_weekday = data.get('hours_weekday', '')
         hours_friday = data.get('hours_friday', '')
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''UPDATE school_info
                      SET vision_mission = ?, facilities = ?, achievements = ?,
@@ -1620,7 +1741,7 @@ def update_school_info():
 def get_extracurriculars():
     """Daftar ekstrakurikuler untuk ditampilkan di beranda (publik)."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''SELECT e.id, e.name, e.description, e.icon, e.photo, e.contact_name, e.contact_phone,
                      (SELECT COUNT(*) FROM ekskul_registrations r WHERE r.ekskul_name = e.name) as member_count
@@ -1654,7 +1775,7 @@ def add_extracurricular():
         if not name:
             return jsonify({'success': False, 'error': 'Nama ekstrakurikuler wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''INSERT INTO extracurriculars (name, description, icon, photo, contact_name, contact_phone, created_at)
                      VALUES (?, ?, ?, ?, ?, ?, ?)''',
@@ -1674,7 +1795,7 @@ def add_extracurricular():
 def delete_extracurricular(extracurricular_id):
     """Hapus ekstrakurikuler (admin/guru only)."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''DELETE FROM extracurriculars WHERE id = ?''', (extracurricular_id,))
         conn.commit()
@@ -1689,7 +1810,7 @@ def get_announcements():
     """Daftar pengumuman/berita - publik. Bisa disaring per audiens (all/siswa/guru)."""
     try:
         audience = (request.args.get('audience') or 'all').strip().lower()
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         if audience == 'all':
             c.execute('''SELECT id, title, description, image, link_url, audience, is_pinned, created_at
@@ -1728,7 +1849,7 @@ def add_announcement():
         if audience not in ('all', 'siswa', 'guru'):
             audience = 'all'
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''INSERT INTO announcements (title, description, image, link_url, audience, is_pinned, created_at)
                      VALUES (?, ?, ?, ?, ?, ?, ?)''',
@@ -1748,7 +1869,7 @@ def add_announcement():
 def delete_announcement(announcement_id):
     """Hapus pengumuman (admin/guru only)."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''DELETE FROM announcements WHERE id = ?''', (announcement_id,))
         conn.commit()
@@ -1772,7 +1893,7 @@ def register_ekskul():
         if not all([ekskul_name, full_name, student_class, phone]):
             return jsonify({'success': False, 'error': 'Mohon lengkapi semua kolom wajib'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
 
         # Ambil info kontak ekskul ini untuk disimpan sebagai snapshot di bukti pendaftaran
@@ -1814,7 +1935,7 @@ def register_ekskul():
 def list_ekskul_registrations():
     """Daftar pendaftar ekstrakurikuler untuk admin/guru."""
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''SELECT id, registration_no, ekskul_name, full_name, class, phone, note, created_at
                      FROM ekskul_registrations ORDER BY created_at DESC''')
@@ -1840,7 +1961,7 @@ def check_nis():
         if not nis:
             return jsonify({'success': False, 'error': 'NIS wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT name, class FROM students WHERE nis = ?", (nis,))
         row = c.fetchone()
@@ -1900,7 +2021,7 @@ def register_student():
             conn.close()
             return jsonify({'error': 'NIS already registered'}), 400
         
-        embedding_blob = pickle.dumps(embedding)
+        embedding_blob = to_binary(pickle.dumps(embedding))
         c.execute('''INSERT INTO students (nis, name, class, face_embedding, registration_date)
                      VALUES (?, ?, ?, ?, ?)''',
                   (nis, name, student_class, embedding_blob, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
