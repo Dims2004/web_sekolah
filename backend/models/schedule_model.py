@@ -1,23 +1,29 @@
-import sqlite3
 import json
 from datetime import datetime
 import os
+from db import get_db_connection as _get_db_connection, IS_POSTGRES
 
 class ScheduleModel:
     def __init__(self, db_path):
-        """Initialize schedule model with database path"""
+        """Initialize schedule model with database path (dipakai hanya untuk
+        SQLite; kalau DATABASE_URL diset, koneksi PostgreSQL yang dipakai)."""
         self.db_path = db_path
         self.init_db()
-    
+
+    def _conn(self):
+        return _get_db_connection(self.db_path)
+
     def init_db(self):
         """Create schedule tables if not exists"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
-            
+
+            id_col = "id SERIAL PRIMARY KEY" if IS_POSTGRES else "id INTEGER PRIMARY KEY AUTOINCREMENT"
+
             # Schedule table
-            c.execute('''CREATE TABLE IF NOT EXISTS schedules
-                         (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            c.execute(f'''CREATE TABLE IF NOT EXISTS schedules
+                         ({id_col},
                           class_name TEXT NOT NULL,
                           day TEXT NOT NULL,
                           time TEXT NOT NULL,
@@ -28,10 +34,10 @@ class ScheduleModel:
                           created_by TEXT DEFAULT 'admin',
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-            
+
             # Teachers table
-            c.execute('''CREATE TABLE IF NOT EXISTS teachers
-                         (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            c.execute(f'''CREATE TABLE IF NOT EXISTS teachers
+                         ({id_col},
                           name TEXT NOT NULL,
                           subject TEXT NOT NULL,
                           nip TEXT UNIQUE,
@@ -43,37 +49,41 @@ class ScheduleModel:
                           token TEXT,
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
-            # Migrasi ringan untuk database lama, dibungkus try/except karena bisa
-            # dijalankan bersamaan oleh beberapa worker gunicorn saat startup.
-            for col_def in [
-                ("username", "TEXT"),
-                ("password", "TEXT"),
-                ("homeroom_class", "TEXT"),
-                ("token", "TEXT"),
-            ]:
-                try:
-                    c.execute("PRAGMA table_info(teachers)")
-                    existing_cols = [col[1] for col in c.fetchall()]
-                    if col_def[0] not in existing_cols:
-                        c.execute(f"ALTER TABLE teachers ADD COLUMN {col_def[0]} {col_def[1]}")
-                except sqlite3.OperationalError as e:
-                    if 'duplicate column' not in str(e).lower():
-                        raise
-            
+            if not IS_POSTGRES:
+                # Migrasi ringan untuk database SQLite lama, dibungkus try/except
+                # karena bisa dijalankan bersamaan oleh beberapa worker gunicorn
+                # saat startup. Skema PostgreSQL sudah lengkap dari awal jadi
+                # tidak butuh migrasi ini.
+                import sqlite3
+                for col_def in [
+                    ("username", "TEXT"),
+                    ("password", "TEXT"),
+                    ("homeroom_class", "TEXT"),
+                    ("token", "TEXT"),
+                ]:
+                    try:
+                        c.execute("PRAGMA table_info(teachers)")
+                        existing_cols = [col[1] for col in c.fetchall()]
+                        if col_def[0] not in existing_cols:
+                            c.execute(f"ALTER TABLE teachers ADD COLUMN {col_def[0]} {col_def[1]}")
+                    except sqlite3.OperationalError as e:
+                        if 'duplicate column' not in str(e).lower():
+                            raise
+
             # Rooms table
-            c.execute('''CREATE TABLE IF NOT EXISTS rooms
-                         (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            c.execute(f'''CREATE TABLE IF NOT EXISTS rooms
+                         ({id_col},
                           name TEXT NOT NULL,
                           building TEXT,
                           capacity INTEGER,
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
             # Classes table
-            c.execute('''CREATE TABLE IF NOT EXISTS classes
-                         (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            c.execute(f'''CREATE TABLE IF NOT EXISTS classes
+                         ({id_col},
                           name TEXT UNIQUE NOT NULL,
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-            
+
             conn.commit()
             conn.close()
             print("✅ Schedule tables initialized")
@@ -83,7 +93,7 @@ class ScheduleModel:
     def add_schedule(self, data):
         """Add new schedule entry"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             
             c.execute('''INSERT INTO schedules 
@@ -104,7 +114,7 @@ class ScheduleModel:
     def get_schedules(self, class_name=None, day=None):
         """Get schedules with optional filters"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             
             query = "SELECT * FROM schedules WHERE 1=1"
@@ -152,7 +162,7 @@ class ScheduleModel:
     def update_schedule(self, schedule_id, data):
         """Update existing schedule"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             
             c.execute('''UPDATE schedules 
@@ -171,7 +181,7 @@ class ScheduleModel:
     def delete_schedule(self, schedule_id):
         """Delete schedule"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             c.execute("DELETE FROM schedules WHERE id=?", (schedule_id,))
             conn.commit()
@@ -183,7 +193,7 @@ class ScheduleModel:
     def add_teacher(self, data):
         """Add new teacher"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             
             c.execute('''INSERT INTO teachers (name, subject, nip, phone, email, username, password, homeroom_class)
@@ -202,7 +212,7 @@ class ScheduleModel:
     def get_teachers(self):
         """Get all teachers (password excluded from listing)"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             c.execute("SELECT id, name, subject, nip, username, homeroom_class FROM teachers ORDER BY name")
             teachers = c.fetchall()
@@ -216,7 +226,7 @@ class ScheduleModel:
     def get_teacher_by_username(self, username):
         """Get one teacher (with password/token) by username, used for login"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             c.execute('''SELECT id, name, subject, username, password, homeroom_class
                          FROM teachers WHERE username = ?''', (username,))
@@ -232,7 +242,7 @@ class ScheduleModel:
     def get_teacher_by_token(self, token):
         """Get one teacher by their session token, used to authorize teacher-only actions"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             c.execute('''SELECT id, name, subject, username, homeroom_class
                          FROM teachers WHERE token = ?''', (token,))
@@ -247,7 +257,7 @@ class ScheduleModel:
     def set_teacher_token(self, teacher_id, token):
         """Store a fresh session token for a teacher after successful login"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             c.execute("UPDATE teachers SET token = ? WHERE id = ?", (token, teacher_id))
             conn.commit()
@@ -259,7 +269,7 @@ class ScheduleModel:
     def update_teacher(self, teacher_id, data):
         """Update a teacher's data. Password only changed if a new one is provided."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             if data.get('password'):
                 c.execute('''UPDATE teachers SET name=?, subject=?, nip=?, username=?, password=?, homeroom_class=?
@@ -280,7 +290,7 @@ class ScheduleModel:
     def delete_teacher(self, teacher_id):
         """Delete a teacher"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             c.execute("DELETE FROM teachers WHERE id=?", (teacher_id,))
             conn.commit()
@@ -292,7 +302,7 @@ class ScheduleModel:
     def add_room(self, data):
         """Add new room"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             
             c.execute('''INSERT INTO rooms (name, building, capacity)
@@ -309,7 +319,7 @@ class ScheduleModel:
     def get_rooms(self):
         """Get all rooms"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             c.execute("SELECT id, name, building, capacity FROM rooms ORDER BY name")
             rooms = c.fetchall()
@@ -322,9 +332,9 @@ class ScheduleModel:
     def add_class(self, name):
         """Add a new class name"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
-            c.execute("INSERT OR IGNORE INTO classes (name) VALUES (?)", (name,))
+            c.execute("INSERT INTO classes (name) VALUES (?) ON CONFLICT (name) DO NOTHING", (name,))
             class_id = c.lastrowid
             conn.commit()
             conn.close()
@@ -336,7 +346,7 @@ class ScheduleModel:
         """Get all class names (from the classes table, plus any class names
         already used in schedules so nothing already in use gets hidden)"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self._conn()
             c = conn.cursor()
             c.execute('''SELECT name FROM classes
                          UNION
