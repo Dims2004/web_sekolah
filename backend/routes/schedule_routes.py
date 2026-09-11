@@ -1,13 +1,9 @@
 from flask import Blueprint, request, jsonify
 from models.schedule_model import ScheduleModel
 import os
-import sqlite3
 import secrets
 from datetime import datetime, timedelta
-
-# Get database path
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATABASE_PATH = os.path.join(BASE_DIR, '..', 'database', 'students.db')
+from db import get_db_connection, DATABASE_PATH
 
 # Initialize schedule model
 schedule_model = ScheduleModel(DATABASE_PATH)
@@ -73,7 +69,7 @@ def teacher_me_students():
         if not teacher.get('homeroom_class'):
             return jsonify({'success': True, 'students': [], 'homeroom_class': None, 'teacher': teacher})
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''SELECT id, nis, name, class, registration_date,
                      (face_embedding IS NOT NULL) as has_photo
@@ -99,7 +95,7 @@ def teacher_me_schedule():
         if not teacher:
             return jsonify({'success': False, 'error': 'Sesi tidak valid, silakan login ulang'}), 401
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('''SELECT id, class_name, day, time, subject, room, color
                      FROM schedules WHERE teacher = ? ORDER BY day, time''', (teacher['name'],))
@@ -123,7 +119,7 @@ def _get_current_teacher():
 def _teacher_teaches_class(teacher_name, class_name):
     """Cek apakah guru ini mengajar mata pelajaran di kelas tersebut (lewat jadwal),
     tanpa memandang hari. Dipakai untuk keperluan umum selain approval izin/sakit."""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM schedules WHERE teacher = ? AND class_name = ?", (teacher_name, class_name))
     count = c.fetchone()[0]
@@ -153,7 +149,7 @@ def _teacher_teaches_class_on_date(teacher_name, class_name, leave_date):
     day_name = _day_name_from_date(leave_date)
     if not day_name:
         return False
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM schedules WHERE teacher = ? AND class_name = ? AND day = ?",
               (teacher_name, class_name, day_name))
@@ -171,7 +167,7 @@ def teacher_me_classes():
         if not teacher:
             return jsonify({'success': False, 'error': 'Sesi tidak valid, silakan login ulang'}), 401
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT DISTINCT class_name FROM schedules WHERE teacher = ? ORDER BY class_name", (teacher['name'],))
         classes = [r[0] for r in c.fetchall()]
@@ -220,7 +216,7 @@ def teacher_class_roster():
                 school_days.append(d.strftime('%Y-%m-%d'))
             d += timedelta(days=1)
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT nis, name, registration_date FROM students WHERE class = ? ORDER BY name", (class_name,))
         students = c.fetchall()
@@ -271,7 +267,7 @@ def teacher_leave_requests():
         if not teacher:
             return jsonify({'success': False, 'error': 'Sesi tidak valid, silakan login ulang'}), 401
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT DISTINCT class_name, day FROM schedules WHERE teacher = ?", (teacher['name'],))
         taught_class_days = set(c.fetchall())
@@ -312,7 +308,7 @@ def review_leave_request(request_id):
         if action not in ('approve', 'reject'):
             return jsonify({'success': False, 'error': 'Aksi tidak valid'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT nis, class, leave_type, leave_date FROM leave_requests WHERE id = ?", (request_id,))
         row = c.fetchone()
@@ -364,7 +360,7 @@ def set_attendance_override():
         if not nis or not att_date:
             return jsonify({'success': False, 'error': 'NIS dan tanggal wajib diisi'}), 400
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT class FROM students WHERE nis = ?", (nis,))
         student = c.fetchone()
