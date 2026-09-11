@@ -1,40 +1,64 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <script>
-(function () {
-    var API_BASE = 'https://websekolahbackend1-cbq3gx3i.b4a.run';
-    var originalFetch = window.fetch;
-    window.fetch = function (input, init) {
-        if (typeof input === 'string' && input.indexOf('/api/') === 0) {
-            input = API_BASE + input;
-        }
-        return originalFetch(input, init);
-    };
-})();
-</script>
+        (function () {
+            var API_BASE = ''; // kosongkan = request /api/... otomatis ikut domain yang sedang diakses. Isi kalau backend di-host di domain TERPISAH dari frontend, mis. 'https://api-sekolahku.onrender.com'
+            var originalFetch = window.fetch;
+            window.fetch = function (input, init) {
+                if (typeof input === 'string' && input.indexOf('/api/') === 0) {
+                    input = API_BASE + input;
+                }
+                return originalFetch(input, init);
+            };
+        })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - E-Absensi Sekolah</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        #adminSidebarWrap{ transition: transform .3s ease; }
-        @media (max-width: 1023px){
-            #adminSidebarWrap{
-                position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
-                transform: translateX(-100%); z-index: 50; overflow-y: auto;
+        #adminSidebarWrap {
+            transition: transform .3s ease;
+        }
+
+        @media (max-width: 1023px) {
+            #adminSidebarWrap {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 260px;
+                transform: translateX(-100%);
+                z-index: 50;
+                overflow-y: auto;
             }
-            #adminSidebarWrap.open{ transform: translateX(0); }
-            #adminSidebarBackdrop{ display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:40; }
-            #adminSidebarBackdrop.open{ display:block; }
+
+            #adminSidebarWrap.open {
+                transform: translateX(0);
+            }
+
+            #adminSidebarBackdrop {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(15, 23, 42, .5);
+                z-index: 40;
+            }
+
+            #adminSidebarBackdrop.open {
+                display: block;
+            }
         }
     </style>
 
 </head>
+
 <body class="bg-gray-100 min-h-screen">
-<!-- Login Modal -->
+    <!-- Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8">
             <div class="text-center mb-6">
@@ -44,33 +68,33 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Admin Login</h2>
                 <p class="text-gray-600">Masukkan kredensial admin</p>
             </div>
-            
+
             <form id="loginForm" class="space-y-4">
                 <div>
                     <label class="block text-gray-700 text-sm font-medium mb-2">Username</label>
-                    <input type="text" id="username" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Masukkan username" required>
+                    <input type="text" id="username"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Masukkan username" required>
                 </div>
-                
+
                 <div>
                     <label class="block text-gray-700 text-sm font-medium mb-2">Password</label>
-                    <input type="password" id="password" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Masukkan password" required>
+                    <input type="password" id="password"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Masukkan password" required>
                 </div>
-                
+
                 <div id="loginError" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">
                     <i class="fas fa-exclamation-circle mr-2"></i>
                     <span id="errorMessage">Username atau password salah</span>
                 </div>
-                
-                <button type="submit" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">
+
+                <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">
                     <i class="fas fa-sign-in-alt mr-2"></i>Login
                 </button>
             </form>
-            
+
             <div class="text-center mt-4">
                 <a href="index.html" class="text-blue-600 hover:text-blue-800 text-sm">
                     <i class="fas fa-arrow-left mr-1"></i>Kembali ke halaman utama
@@ -86,10 +110,12 @@
             <div class="container mx-auto px-4">
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center min-w-0">
-                        <button onclick="toggleAdminSidebar()" class="lg:hidden w-10 h-10 mr-2 flex-shrink-0 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-600">
+                        <button onclick="toggleAdminSidebar()"
+                            class="lg:hidden w-10 h-10 mr-2 flex-shrink-0 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-600">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                        <div
+                            class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
                             <i class="fas fa-shield-alt text-white"></i>
                         </div>
                         <div class="min-w-0">
@@ -97,14 +123,14 @@
                             <p class="text-sm text-gray-500 hidden sm:block">Sistem E-Absensi Sekolah</p>
                         </div>
                     </div>
-                    
+
                     <div class="flex items-center space-x-4 flex-shrink-0">
                         <div class="text-right hidden sm:block">
                             <div class="font-medium text-gray-800" id="adminName">Administrator</div>
                             <div class="text-sm text-gray-500" id="currentTime">Loading...</div>
                         </div>
-                        <button onclick="logout()" 
-                                class="bg-red-100 hover:bg-red-200 text-red-700 px-3 sm:px-4 py-2 rounded-lg transition duration-300">
+                        <button onclick="logout()"
+                            class="bg-red-100 hover:bg-red-200 text-red-700 px-3 sm:px-4 py-2 rounded-lg transition duration-300">
                             <i class="fas fa-sign-out-alt sm:mr-2"></i><span class="hidden sm:inline">Logout</span>
                         </button>
                     </div>
@@ -122,7 +148,8 @@
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-4 lg:hidden">
                         <h3 class="font-bold text-gray-700">Menu Admin</h3>
-                        <button onclick="toggleAdminSidebar()" class="w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500">
+                        <button onclick="toggleAdminSidebar()"
+                            class="w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500">
                             <i class="fas fa-xmark"></i>
                         </button>
                     </div>
@@ -130,35 +157,35 @@
                     <ul class="space-y-2">
                         <!-- Dashboard -->
                         <li>
-                            <a href="#" onclick="showSection('dashboard')" 
-                               class="flex items-center p-3 rounded-lg hover:bg-blue-50 text-blue-600">
+                            <a href="#" onclick="showSection('dashboard')"
+                                class="flex items-center p-3 rounded-lg hover:bg-blue-50 text-blue-600">
                                 <i class="fas fa-tachometer-alt mr-3"></i>
                                 <span>Dashboard</span>
                             </a>
                         </li>
-                        
+
                         <!-- Kelola Siswa -->
                         <li>
-                            <a href="#" onclick="showSection('students')" 
-                               class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                            <a href="#" onclick="showSection('students')"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <i class="fas fa-users mr-3"></i>
                                 <span>Kelola Siswa</span>
                             </a>
                         </li>
-                        
+
                         <!-- Laporan Absensi -->
                         <li>
-                            <a href="#" onclick="showSection('attendance')" 
-                               class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                            <a href="#" onclick="showSection('attendance')"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <i class="fas fa-clipboard-check mr-3"></i>
                                 <span>Laporan Absensi</span>
                             </a>
                         </li>
-                        
+
                         <!-- NEW: Jadwal Pelajaran (Admin Schedule) -->
                         <li>
-                            <a href="admin-schedule.html" 
-                               class="flex items-center p-3 rounded-lg hover:bg-purple-50 text-purple-600">
+                            <a href="admin-schedule.html"
+                                class="flex items-center p-3 rounded-lg hover:bg-purple-50 text-purple-600">
                                 <i class="fas fa-calendar-alt mr-3"></i>
                                 <span>Kelola Jadwal</span>
                             </a>
@@ -166,8 +193,8 @@
 
                         <!-- NEW: Pendaftar PPDB -->
                         <li>
-                            <a href="#" onclick="showSection('admissions')" 
-                               class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                            <a href="#" onclick="showSection('admissions')"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <i class="fas fa-file-signature mr-3"></i>
                                 <span>Pendaftar PPDB</span>
                             </a>
@@ -175,8 +202,8 @@
 
                         <!-- NEW: Info Sekolah -->
                         <li>
-                            <a href="#" onclick="showSection('schoolinfo')" 
-                               class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                            <a href="#" onclick="showSection('schoolinfo')"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <i class="fas fa-info-circle mr-3"></i>
                                 <span>Info Sekolah</span>
                             </a>
@@ -184,8 +211,8 @@
 
                         <!-- NEW: Kelola Guru -->
                         <li>
-                            <a href="#" onclick="showSection('teachers')" 
-                               class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                            <a href="#" onclick="showSection('teachers')"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <i class="fas fa-chalkboard-teacher mr-3"></i>
                                 <span>Kelola Guru</span>
                             </a>
@@ -193,8 +220,8 @@
 
                         <!-- NEW: Ekstrakurikuler -->
                         <li>
-                            <a href="#" onclick="showSection('extracurriculars')" 
-                               class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                            <a href="#" onclick="showSection('extracurriculars')"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <i class="fas fa-futbol mr-3"></i>
                                 <span>Ekstrakurikuler</span>
                             </a>
@@ -202,59 +229,59 @@
 
                         <!-- NEW: Pengumuman -->
                         <li>
-                            <a href="#" onclick="showSection('announcements')" 
-                               class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                            <a href="#" onclick="showSection('announcements')"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <i class="fas fa-bullhorn mr-3"></i>
                                 <span>Pengumuman</span>
                             </a>
                         </li>
-                        
+
                         <!-- Statistik -->
                         <li>
-                            <a href="#" onclick="showSection('reports')" 
-                               class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                            <a href="#" onclick="showSection('reports')"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <i class="fas fa-chart-bar mr-3"></i>
                                 <span>Statistik</span>
                             </a>
                         </li>
-                        
+
                         <!-- Jadwal Publik (View Only) -->
                         <li>
                             <a href="schedule.html" target="_blank"
-                               class="flex items-center p-3 rounded-lg hover:bg-indigo-50 text-indigo-600">
+                                class="flex items-center p-3 rounded-lg hover:bg-indigo-50 text-indigo-600">
                                 <i class="fas fa-eye mr-3"></i>
                                 <span>Lihat Jadwal</span>
                             </a>
                         </li>
                     </ul>
-                    
+
                     <!-- Quick Actions - UPDATED -->
                     <div class="mt-8 p-4 bg-blue-50 rounded-lg">
                         <h4 class="font-bold text-blue-800 text-sm mb-2">Quick Actions</h4>
                         <div class="space-y-2">
-                            <button onclick="exportAttendance()" 
-                                    class="w-full flex items-center justify-center bg-white border border-blue-200 text-blue-600 px-3 py-2 rounded text-sm hover:bg-blue-50">
+                            <button onclick="exportAttendance()"
+                                class="w-full flex items-center justify-center bg-white border border-blue-200 text-blue-600 px-3 py-2 rounded text-sm hover:bg-blue-50">
                                 <i class="fas fa-file-export mr-2"></i>Export Data
                             </button>
-                            
+
                             <!-- NEW: Manage Schedule Button -->
-                            <a href="admin-schedule.html" 
-                               class="block text-center bg-purple-100 text-purple-700 px-3 py-2 rounded text-sm hover:bg-purple-200">
+                            <a href="admin-schedule.html"
+                                class="block text-center bg-purple-100 text-purple-700 px-3 py-2 rounded text-sm hover:bg-purple-200">
                                 <i class="fas fa-calendar-plus mr-2"></i>Kelola Jadwal
                             </a>
 
                             <a href="attendance.html" target="_blank"
-                               class="block text-center bg-teal-100 text-teal-700 px-3 py-2 rounded text-sm hover:bg-teal-200">
+                                class="block text-center bg-teal-100 text-teal-700 px-3 py-2 rounded text-sm hover:bg-teal-200">
                                 <i class="fas fa-desktop mr-2"></i>Buka Kiosk Absensi
                             </a>
-                            
-                            <a href="index.html" 
-                               class="block text-center bg-green-100 text-green-700 px-3 py-2 rounded text-sm hover:bg-green-200">
+
+                            <a href="index.html"
+                                class="block text-center bg-green-100 text-green-700 px-3 py-2 rounded text-sm hover:bg-green-200">
                                 <i class="fas fa-external-link-alt mr-2"></i>Ke Halaman Utama
                             </a>
                         </div>
                     </div>
-                    
+
                     <!-- Info Box -->
                     <div class="mt-4 p-3 bg-yellow-50 rounded-lg">
                         <p class="text-xs text-yellow-700">
@@ -287,7 +314,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="bg-white rounded-xl shadow p-6">
                             <div class="flex items-center">
                                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
@@ -299,7 +326,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="bg-white rounded-xl shadow p-6">
                             <div class="flex items-center">
                                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
@@ -311,7 +338,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="bg-white rounded-xl shadow p-6">
                             <div class="flex items-center">
                                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
@@ -334,13 +361,12 @@
                                 <canvas id="attendanceChart"></canvas>
                             </div>
                         </div>
-                        
+
                         <!-- Recent Attendance -->
                         <div class="bg-white rounded-xl shadow p-6">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="font-bold text-gray-800">Absensi Terbaru</h3>
-                                <button onclick="refreshDashboard()" 
-                                        class="text-blue-600 hover:text-blue-800">
+                                <button onclick="refreshDashboard()" class="text-blue-600 hover:text-blue-800">
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
                             </div>
@@ -351,7 +377,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Class Statistics -->
                         <div class="bg-white rounded-xl shadow p-6 lg:col-span-2">
                             <h3 class="font-bold text-gray-800 mb-4">Statistik per Kelas (Hari Ini)</h3>
@@ -393,17 +419,18 @@
                                 <div>
                                     <h3 class="font-bold text-gray-800">Daftar Siswa</h3>
                                     <p class="text-sm text-gray-500" id="studentsCount">Memuat data...</p>
-                                    <p class="text-xs text-gray-400 mt-1"><i class="fas fa-circle-info mr-1"></i>Data siswa otomatis masuk ke sini setelah pendaftaran PPDB disetujui.</p>
+                                    <p class="text-xs text-gray-400 mt-1"><i class="fas fa-circle-info mr-1"></i>Data
+                                        siswa otomatis masuk ke sini setelah pendaftaran PPDB disetujui.</p>
                                 </div>
                                 <div class="flex space-x-3">
-                                    <button onclick="refreshStudents()" 
-                                            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">
+                                    <button onclick="refreshStudents()"
+                                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">
                                         <i class="fas fa-sync-alt mr-2"></i>Refresh
                                     </button>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="overflow-x-auto">
                             <table class="w-full">
                                 <thead>
@@ -441,30 +468,30 @@
                     <!-- Date Filter -->
                     <div class="bg-white rounded-xl shadow p-6 mb-6">
                         <h3 class="font-bold text-gray-800 mb-4">Filter Laporan</h3>
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div>
-        <label class="block text-gray-700 text-sm font-medium mb-2">Dari Tanggal</label>
-        <input type="date" id="dateFrom" 
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-    </div>
-    <div>
-        <label class="block text-gray-700 text-sm font-medium mb-2">Sampai Tanggal</label>
-        <input type="date" id="dateTo" 
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-    </div>
-    <div>
-        <label class="block text-gray-700 text-sm font-medium mb-2">Kelas</label>
-        <select id="classFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-            <option value="">Semua Kelas</option>
-        </select>
-    </div>
-    <div class="flex items-end">
-        <button onclick="loadAttendanceReport()" 
-                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
-            <i class="fas fa-filter mr-2"></i>Filter
-        </button>
-    </div>
-</div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-gray-700 text-sm font-medium mb-2">Dari Tanggal</label>
+                                <input type="date" id="dateFrom"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-medium mb-2">Sampai Tanggal</label>
+                                <input type="date" id="dateTo"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-medium mb-2">Kelas</label>
+                                <select id="classFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">Semua Kelas</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="loadAttendanceReport()"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                                    <i class="fas fa-filter mr-2"></i>Filter
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Attendance Table -->
@@ -475,13 +502,13 @@
                                     <h3 class="font-bold text-gray-800">Data Absensi</h3>
                                     <p class="text-sm text-gray-500" id="attendanceCount">Memuat data...</p>
                                 </div>
-                                <button onclick="exportToCSV()" 
-                                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                                <button onclick="exportToCSV()"
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
                                     <i class="fas fa-file-export mr-2"></i>Export CSV
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div class="overflow-x-auto max-h-96">
                             <table class="w-full">
                                 <thead>
@@ -554,7 +581,8 @@
                             <h2 class="text-2xl font-bold text-gray-800 mb-2">Pendaftar PPDB</h2>
                             <p class="text-gray-600">Data calon siswa yang mengisi formulir pendaftaran online</p>
                         </div>
-                        <button onclick="loadAdmissions()" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-lg">
+                        <button onclick="loadAdmissions()"
+                            class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-lg">
                             <i class="fas fa-sync-alt mr-2"></i>Refresh
                         </button>
                     </div>
@@ -602,28 +630,38 @@
                         <form id="schoolInfoForm" class="space-y-5">
                             <div>
                                 <label class="block text-gray-700 text-sm font-medium mb-2">Visi &amp; Misi</label>
-                                <textarea id="siVisionMission" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                                <textarea id="siVisionMission" rows="3"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                             </div>
                             <div>
-                                <label class="block text-gray-700 text-sm font-medium mb-2">Fasilitas <span class="text-gray-400 font-normal">(satu fasilitas per baris)</span></label>
-                                <textarea id="siFacilities" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Laboratorium Computer Vision&#10;Ruang Kelas Ber-AC&#10;Perpustakaan Digital"></textarea>
+                                <label class="block text-gray-700 text-sm font-medium mb-2">Fasilitas <span
+                                        class="text-gray-400 font-normal">(satu fasilitas per baris)</span></label>
+                                <textarea id="siFacilities" rows="5"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="Laboratorium Computer Vision&#10;Ruang Kelas Ber-AC&#10;Perpustakaan Digital"></textarea>
                             </div>
                             <div>
                                 <label class="block text-gray-700 text-sm font-medium mb-2">Prestasi</label>
-                                <textarea id="siAchievements" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                                <textarea id="siAchievements" rows="2"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-gray-700 text-sm font-medium mb-2">Jam Sekolah (Senin - Kamis)</label>
-                                    <input type="text" id="siHoursWeekday" placeholder="07:00 - 15:00" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <label class="block text-gray-700 text-sm font-medium mb-2">Jam Sekolah (Senin -
+                                        Kamis)</label>
+                                    <input type="text" id="siHoursWeekday" placeholder="07:00 - 15:00"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 </div>
                                 <div>
-                                    <label class="block text-gray-700 text-sm font-medium mb-2">Jam Sekolah (Jumat)</label>
-                                    <input type="text" id="siHoursFriday" placeholder="07:00 - 11:30" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <label class="block text-gray-700 text-sm font-medium mb-2">Jam Sekolah
+                                        (Jumat)</label>
+                                    <input type="text" id="siHoursFriday" placeholder="07:00 - 11:30"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 </div>
                             </div>
                             <div id="schoolInfoSaveMsg" class="hidden text-sm p-3 rounded-lg"></div>
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl">
+                            <button type="submit"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl">
                                 <i class="fas fa-save mr-2"></i>Simpan Perubahan
                             </button>
                         </form>
@@ -635,9 +673,11 @@
                     <div class="mb-8 flex items-center justify-between">
                         <div>
                             <h2 class="text-2xl font-bold text-gray-800 mb-2">Kelola Guru</h2>
-                            <p class="text-gray-600">Tambah dan kelola data guru yang bisa dipilih di jadwal pelajaran</p>
+                            <p class="text-gray-600">Tambah dan kelola data guru yang bisa dipilih di jadwal pelajaran
+                            </p>
                         </div>
-                        <button onclick="showAddTeacherModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                        <button onclick="showAddTeacherModal()"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
                             <i class="fas fa-user-plus mr-2"></i>Tambah Guru
                         </button>
                     </div>
@@ -675,7 +715,8 @@
                             <h2 class="text-2xl font-bold text-gray-800 mb-2">Ekstrakurikuler</h2>
                             <p class="text-gray-600">Daftar ini akan tampil di halaman Beranda</p>
                         </div>
-                        <button onclick="showAddExtracurricularModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg">
+                        <button onclick="showAddExtracurricularModal()"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg">
                             <i class="fas fa-plus mr-2"></i>Tambah Ekstrakurikuler
                         </button>
                     </div>
@@ -721,9 +762,11 @@
                     <div class="mb-8 flex items-center justify-between">
                         <div>
                             <h2 class="text-2xl font-bold text-gray-800 mb-2">Pengumuman</h2>
-                            <p class="text-gray-600">Tampil sebagai banner/kartu berita di Beranda, Portal Siswa, dan Portal Guru</p>
+                            <p class="text-gray-600">Tampil sebagai banner/kartu berita di Beranda, Portal Siswa, dan
+                                Portal Guru</p>
                         </div>
-                        <button onclick="showAddAnnouncementModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg">
+                        <button onclick="showAddAnnouncementModal()"
+                            class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg">
                             <i class="fas fa-plus mr-2"></i>Tambah Pengumuman
                         </button>
                     </div>
@@ -740,11 +783,13 @@
 
         <!-- Announcement Modal -->
         <!-- Admission Documents Modal -->
-        <div id="admissionDocsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div id="admissionDocsModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
             <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-5 sm:p-8 max-h-[85vh] overflow-y-auto">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-xl font-bold text-gray-800">Berkas Pendaftaran</h3>
-                    <button onclick="document.getElementById('admissionDocsModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                    <button onclick="document.getElementById('admissionDocsModal').classList.add('hidden')"
+                        class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
                 </div>
                 <p class="text-sm text-gray-500 mb-4" id="admissionDocsApplicant">-</p>
                 <div id="admissionDocsList" class="space-y-3">
@@ -753,26 +798,35 @@
             </div>
         </div>
 
-        <div id="announcementModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div id="announcementModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
             <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6">Tambah Pengumuman</h3>
                 <form id="announcementForm" class="space-y-4">
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Judul</label>
-                        <input type="text" id="annTitle" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Contoh: Libur Semester Ganjil">
+                        <input type="text" id="annTitle" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            placeholder="Contoh: Libur Semester Ganjil">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Deskripsi Singkat</label>
-                        <textarea id="annDescription" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Isi pengumuman..."></textarea>
+                        <textarea id="annDescription" rows="3"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            placeholder="Isi pengumuman..."></textarea>
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Gambar/Banner</label>
-                        <input type="file" id="annImage" accept="image/*" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                        <img id="annImagePreview" class="hidden mt-3 w-full h-32 object-cover rounded-lg border border-gray-200">
+                        <input type="file" id="annImage" accept="image/*"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <img id="annImagePreview"
+                            class="hidden mt-3 w-full h-32 object-cover rounded-lg border border-gray-200">
                     </div>
                     <div>
-                        <label class="block text-gray-700 text-sm font-medium mb-2">Link Tujuan <span class="text-gray-400 font-normal">(opsional)</span></label>
-                        <input type="text" id="annLink" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Contoh: admission.html">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Link Tujuan <span
+                                class="text-gray-400 font-normal">(opsional)</span></label>
+                        <input type="text" id="annLink" class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            placeholder="Contoh: admission.html">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Tampilkan untuk</label>
@@ -787,78 +841,100 @@
                         Sematkan di atas (prioritas tampil)
                     </label>
                     <div class="flex gap-4 mt-6">
-                        <button type="submit" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 px-6 rounded-xl">Simpan</button>
-                        <button type="button" onclick="document.getElementById('announcementModal').classList.add('hidden')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">Batal</button>
+                        <button type="submit"
+                            class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 px-6 rounded-xl">Simpan</button>
+                        <button type="button"
+                            onclick="document.getElementById('announcementModal').classList.add('hidden')"
+                            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">Batal</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Teacher Modal -->
-        <div id="teacherModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div id="teacherModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
             <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6" id="teacherModalTitle">Tambah Guru</h3>
                 <form id="teacherForm" class="space-y-4">
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Nama Guru</label>
-                        <input type="text" id="teacherName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" id="teacherName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Mata Pelajaran</label>
-                        <input type="text" id="teacherSubject" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" id="teacherSubject" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">NIP</label>
                         <input type="text" id="teacherNip" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                     </div>
                     <div class="border-t border-gray-100 pt-4">
-                        <p class="text-xs text-gray-500 mb-3"><i class="fas fa-lock mr-1"></i>Untuk login ke Portal Guru</p>
+                        <p class="text-xs text-gray-500 mb-3"><i class="fas fa-lock mr-1"></i>Untuk login ke Portal Guru
+                        </p>
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Username</label>
-                        <input type="text" id="teacherUsername" required class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Contoh: budi.santoso">
+                        <input type="text" id="teacherUsername" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            placeholder="Contoh: budi.santoso">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Password</label>
-                        <input type="text" id="teacherPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Password login guru">
-                        <p class="text-xs text-gray-400 mt-1" id="teacherPasswordHint" style="display:none;">Kosongkan kalau tidak mau mengubah password.</p>
+                        <input type="text" id="teacherPassword"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            placeholder="Password login guru">
+                        <p class="text-xs text-gray-400 mt-1" id="teacherPasswordHint" style="display:none;">Kosongkan
+                            kalau tidak mau mengubah password.</p>
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Wali Kelas</label>
                         <select id="teacherHomeroom" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                             <option value="">Bukan wali kelas</option>
                         </select>
-                        <p class="text-xs text-gray-400 mt-1">Kalau dipilih, guru ini hanya bisa menambahkan siswa ke kelas ini.</p>
+                        <p class="text-xs text-gray-400 mt-1">Kalau dipilih, guru ini hanya bisa menambahkan siswa ke
+                            kelas ini.</p>
                     </div>
                     <div class="flex gap-4 mt-6">
-                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl">Simpan</button>
-                        <button type="button" onclick="document.getElementById('teacherModal').classList.add('hidden')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">Batal</button>
+                        <button type="submit"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl">Simpan</button>
+                        <button type="button" onclick="document.getElementById('teacherModal').classList.add('hidden')"
+                            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">Batal</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Extracurricular Modal -->
-        <div id="extracurricularModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div id="extracurricularModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
             <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6">Tambah Ekstrakurikuler</h3>
                 <form id="extracurricularForm" class="space-y-4">
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Nama Ekstrakurikuler</label>
-                        <input type="text" id="exName" required placeholder="Contoh: Pramuka" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" id="exName" required placeholder="Contoh: Pramuka"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Deskripsi Singkat</label>
-                        <textarea id="exDescription" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Latihan setiap Sabtu pagi"></textarea>
+                        <textarea id="exDescription" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            placeholder="Latihan setiap Sabtu pagi"></textarea>
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Foto Ekstrakurikuler</label>
-                        <input type="file" id="exPhoto" accept="image/*" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                        <p class="text-xs text-gray-400 mt-1">Foto ini akan tampil sebagai gambar utama di slide Beranda. Kalau tidak diisi, dipakai ikon bawaan.</p>
-                        <img id="exPhotoPreview" class="hidden mt-3 w-full h-40 object-cover rounded-lg border border-gray-200">
+                        <input type="file" id="exPhoto" accept="image/*"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <p class="text-xs text-gray-400 mt-1">Foto ini akan tampil sebagai gambar utama di slide
+                            Beranda. Kalau tidak diisi, dipakai ikon bawaan.</p>
+                        <img id="exPhotoPreview"
+                            class="hidden mt-3 w-full h-40 object-cover rounded-lg border border-gray-200">
                     </div>
                     <div>
-                        <label class="block text-gray-700 text-sm font-medium mb-2">Ikon (cadangan kalau tanpa foto)</label>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Ikon (cadangan kalau tanpa
+                            foto)</label>
                         <select id="exIcon" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                             <option value="fa-star">Bintang</option>
                             <option value="fa-futbol">Olahraga (Bola)</option>
@@ -872,19 +948,25 @@
                         </select>
                     </div>
                     <div class="border-t border-gray-100 pt-4">
-                        <p class="text-xs text-gray-500 mb-3"><i class="fas fa-address-card mr-1"></i>Narahubung ekstrakurikuler ini (tampil di halaman pendaftaran)</p>
+                        <p class="text-xs text-gray-500 mb-3"><i class="fas fa-address-card mr-1"></i>Narahubung
+                            ekstrakurikuler ini (tampil di halaman pendaftaran)</p>
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">Nama Narahubung</label>
-                        <input type="text" id="exContactName" placeholder="Contoh: Pak Budi Santoso" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" id="exContactName" placeholder="Contoh: Pak Budi Santoso"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                     </div>
                     <div>
                         <label class="block text-gray-700 text-sm font-medium mb-2">No. HP/WA Narahubung</label>
-                        <input type="text" id="exContactPhone" placeholder="08xxxxxxxxxx" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" id="exContactPhone" placeholder="08xxxxxxxxxx"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                     </div>
                     <div class="flex gap-4 mt-6">
-                        <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl">Simpan</button>
-                        <button type="button" onclick="document.getElementById('extracurricularModal').classList.add('hidden')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">Batal</button>
+                        <button type="submit"
+                            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl">Simpan</button>
+                        <button type="button"
+                            onclick="document.getElementById('extracurricularModal').classList.add('hidden')"
+                            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">Batal</button>
                     </div>
                 </form>
             </div>
@@ -906,18 +988,22 @@
     </div>
 
     <!-- Add Student Modal (tanpa kamera - data saja) -->
-    <div id="editStudentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+    <div id="editStudentModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8">
             <h3 class="text-2xl font-bold text-gray-800 mb-2">Edit Data Siswa</h3>
-            <p class="text-sm text-gray-500 mb-6"><i class="fas fa-circle-info mr-1"></i>Lengkapi atau perbarui NIS siswa yang otomatis masuk dari persetujuan PPDB.</p>
+            <p class="text-sm text-gray-500 mb-6"><i class="fas fa-circle-info mr-1"></i>Lengkapi atau perbarui NIS
+                siswa yang otomatis masuk dari persetujuan PPDB.</p>
             <form id="editStudentForm" class="space-y-4">
                 <div>
                     <label class="block text-gray-700 text-sm font-medium mb-2">NIS</label>
-                    <input type="text" id="editStudentNis" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="text" id="editStudentNis" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                 </div>
                 <div>
                     <label class="block text-gray-700 text-sm font-medium mb-2">Nama Lengkap</label>
-                    <input type="text" id="editStudentName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <input type="text" id="editStudentName" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                 </div>
                 <div>
                     <label class="block text-gray-700 text-sm font-medium mb-2">Kelas</label>
@@ -927,8 +1013,10 @@
                 </div>
                 <div id="editStudentModalError" class="hidden bg-red-50 text-red-700 p-3 rounded-lg text-sm"></div>
                 <div class="flex gap-4 mt-6">
-                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl">Simpan</button>
-                    <button type="button" onclick="closeEditStudentModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">Batal</button>
+                    <button type="submit"
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl">Simpan</button>
+                    <button type="button" onclick="closeEditStudentModal()"
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">Batal</button>
                 </div>
             </form>
         </div>
@@ -945,21 +1033,21 @@
                 <p class="text-gray-600">Apakah Anda yakin ingin menghapus data siswa ini?</p>
                 <p class="text-sm text-gray-500 mt-2">Data yang sudah dihapus tidak dapat dikembalikan</p>
             </div>
-            
+
             <div class="bg-gray-50 rounded-xl p-4 mb-6">
                 <div class="text-center">
                     <div class="font-medium text-gray-800" id="deleteStudentName">-</div>
                     <div class="text-sm text-gray-500" id="deleteStudentNIS">NIS: -</div>
                 </div>
             </div>
-            
+
             <div class="flex gap-4">
                 <button onclick="closeDeleteModal()"
-                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl">
                     Batal
                 </button>
                 <button onclick="confirmDelete()"
-                        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl">
+                    class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl">
                     <i class="fas fa-trash mr-2"></i>Hapus
                 </button>
             </div>
@@ -975,14 +1063,14 @@
         let studentToDelete = null;
 
         function authHeaders() {
-            return { 'Authorization': 'Bearer ' + adminToken };
+            return {'Authorization': 'Bearer ' + adminToken};
         }
 
         // Check if already logged in
-        window.onload = function() {
+        window.onload = function () {
             const savedToken = localStorage.getItem('adminToken');
             const savedUser = localStorage.getItem('adminUser');
-            
+
             if (savedToken && savedUser) {
                 adminToken = savedToken;
                 adminUser = JSON.parse(savedUser);
@@ -990,7 +1078,7 @@
             } else {
                 document.getElementById('loginModal').classList.remove('hidden');
             }
-            
+
             updateTime();
             setInterval(updateTime, 1000);
         };
@@ -1005,37 +1093,37 @@
                 month: 'long',
                 day: 'numeric'
             });
-            
+
             document.getElementById('currentTime').textContent = `${dateStr} ${timeStr}`;
         }
 
         // Login function
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
+
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('loginError');
-            
+
             try {
                 const response = await fetch('/api/admin/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({username, password})
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     adminToken = result.token;
                     adminUser = result.user;
-                    
+
                     // Save to localStorage
                     localStorage.setItem('adminToken', adminToken);
                     localStorage.setItem('adminUser', JSON.stringify(adminUser));
-                    
+
                     showAdminDashboard();
                 } else {
                     errorDiv.classList.remove('hidden');
@@ -1052,12 +1140,12 @@
         function showAdminDashboard() {
             document.getElementById('loginModal').classList.add('hidden');
             document.getElementById('adminDashboard').classList.remove('hidden');
-            
+
             // Set admin name
             if (adminUser) {
                 document.getElementById('adminName').textContent = adminUser.username;
             }
-            
+
             // Load dashboard data
             loadDashboardData();
             loadStudents();
@@ -1077,7 +1165,7 @@
                 localStorage.removeItem('adminUser');
                 adminToken = null;
                 adminUser = null;
-                
+
                 document.getElementById('adminDashboard').classList.add('hidden');
                 document.getElementById('loginModal').classList.remove('hidden');
                 document.getElementById('loginForm').reset();
@@ -1106,13 +1194,13 @@
             document.getElementById('teachersSection').classList.add('hidden');
             document.getElementById('extracurricularsSection').classList.add('hidden');
             document.getElementById('announcementsSection').classList.add('hidden');
-            
+
             // Show selected section
             document.getElementById(section + 'Section').classList.remove('hidden');
             currentSection = section;
-            
+
             // Load section data
-            switch(section) {
+            switch (section) {
                 case 'dashboard':
                     loadDashboardData();
                     break;
@@ -1148,26 +1236,26 @@
         // Load dashboard data
         async function loadDashboardData() {
             try {
-                const response = await fetch('/api/admin/dashboard', { headers: authHeaders() });
+                const response = await fetch('/api/admin/dashboard', {headers: authHeaders()});
                 const data = await response.json();
-                
+
                 if (data.success) {
                     // Update stats
                     document.getElementById('statTotalStudents').textContent = data.stats.total_students;
                     document.getElementById('statTodayAttendance').textContent = data.stats.today_attendance;
                     document.getElementById('statTotalAttendance').textContent = data.stats.total_attendance;
                     document.getElementById('statAttendanceRate').textContent = data.stats.attendance_rate_today + '%';
-                    
+
                     // Update last updated
-                    document.getElementById('lastUpdated').textContent = 
+                    document.getElementById('lastUpdated').textContent =
                         `Terakhir diperbarui: ${data.last_updated}`;
-                    
+
                     // Update recent attendance
                     updateRecentAttendance(data.recent_attendance);
-                    
+
                     // Update class stats
                     updateClassStats(data.class_stats);
-                    
+
                     // Update chart
                     updateAttendanceChart(data.daily_stats);
                 }
@@ -1179,7 +1267,7 @@
         // Update recent attendance list
         function updateRecentAttendance(attendance) {
             const container = document.getElementById('recentAttendanceList');
-            
+
             if (!attendance || attendance.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-8 text-gray-400">
@@ -1189,15 +1277,15 @@
                 `;
                 return;
             }
-            
+
             container.innerHTML = attendance.map(record => {
                 const date = new Date(record.timestamp);
-                const timeStr = date.toLocaleTimeString('id-ID', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
+                const timeStr = date.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit'
                 });
                 const dateStr = date.toLocaleDateString('id-ID');
-                
+
                 return `
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
@@ -1216,7 +1304,7 @@
         // Update class stats table
         function updateClassStats(classStats) {
             const container = document.getElementById('classStatsTable');
-            
+
             if (!classStats || classStats.length === 0) {
                 container.innerHTML = `
                     <tr>
@@ -1228,11 +1316,11 @@
                 `;
                 return;
             }
-            
+
             container.innerHTML = classStats.map(cls => {
-                const percentage = cls.total_students > 0 ? 
+                const percentage = cls.total_students > 0 ?
                     Math.round((cls.today_attendance / cls.total_students) * 100) : 0;
-                
+
                 return `
                     <tr class="border-b border-gray-100 hover:bg-gray-50">
                         <td class="py-3 px-4">${cls.class}</td>
@@ -1255,20 +1343,20 @@
         // Update attendance chart
         function updateAttendanceChart(dailyStats) {
             const ctx = document.getElementById('attendanceChart').getContext('2d');
-            
+
             // Destroy previous chart if exists
             if (chartInstance) {
                 chartInstance.destroy();
             }
-            
+
             // Prepare data
             const labels = dailyStats.map(day => {
                 const date = new Date(day.date);
-                return date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' });
+                return date.toLocaleDateString('id-ID', {weekday: 'short', day: 'numeric'});
             }).reverse();
-            
+
             const data = dailyStats.map(day => day.attendance_count).reverse();
-            
+
             // Create chart
             chartInstance = new Chart(ctx, {
                 type: 'line',
@@ -1312,12 +1400,12 @@
         // Load students data
         async function loadStudents() {
             try {
-                const response = await fetch('/api/admin/students/manage', { headers: authHeaders() });
+                const response = await fetch('/api/admin/students/manage', {headers: authHeaders()});
                 const data = await response.json();
-                
+
                 if (data.success) {
                     updateStudentsTable(data.students);
-                    document.getElementById('studentsCount').textContent = 
+                    document.getElementById('studentsCount').textContent =
                         `Total: ${data.total} siswa`;
                 }
             } catch (error) {
@@ -1328,7 +1416,7 @@
         // Update students table
         function updateStudentsTable(students) {
             const container = document.getElementById('studentsTable');
-            
+
             if (!students || students.length === 0) {
                 container.innerHTML = `
                     <tr>
@@ -1341,25 +1429,25 @@
                 `;
                 return;
             }
-            
+
             container.innerHTML = students.map(student => {
                 const regDate = new Date(student.registration_date);
-                const lastAtt = student.last_attendance !== 'Belum pernah absen' ? 
+                const lastAtt = student.last_attendance !== 'Belum pernah absen' ?
                     new Date(student.last_attendance) : null;
-                
+
                 return `
                     <tr class="border-b border-gray-100 hover:bg-gray-50 ${student.nis_pending ? 'bg-amber-50/40' : ''}">
                         <td class="py-3 px-4 font-medium">
                             ${student.nis_pending
-                                ? '<span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-semibold"><i class="fas fa-triangle-exclamation mr-1"></i>Belum diisi</span>'
-                                : student.nis}
+                        ? '<span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-semibold"><i class="fas fa-triangle-exclamation mr-1"></i>Belum diisi</span>'
+                        : student.nis}
                         </td>
                         <td class="py-3 px-4">${student.name}</td>
                         <td class="py-3 px-4">${student.class}</td>
                         <td class="py-3 px-4">
                             ${student.has_photo
-                                ? '<span class="bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs font-semibold"><i class="fas fa-check mr-1"></i>Ada</span>'
-                                : '<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-full text-xs font-semibold"><i class="fas fa-clock mr-1"></i>Belum diambil wali kelas</span>'}
+                        ? '<span class="bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs font-semibold"><i class="fas fa-check mr-1"></i>Ada</span>'
+                        : '<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-full text-xs font-semibold"><i class="fas fa-clock mr-1"></i>Belum diambil wali kelas</span>'}
                         </td>
                         <td class="py-3 px-4">${regDate.toLocaleDateString('id-ID')}</td>
                         <td class="py-3 px-4">${student.attendance_count} kali</td>
@@ -1428,7 +1516,7 @@
             try {
                 const response = await fetch(`/api/admin/students/${studentId}`, {
                     method: 'PUT',
-                    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                    headers: Object.assign({'Content-Type': 'application/json'}, authHeaders()),
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
@@ -1466,15 +1554,15 @@
         // Confirm delete
         async function confirmDelete() {
             if (!studentToDelete) return;
-            
+
             try {
                 const response = await fetch(`/api/admin/students/${studentToDelete}`, {
                     method: 'DELETE',
                     headers: authHeaders()
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     alert('Siswa berhasil dihapus');
                     closeDeleteModal();
@@ -1509,23 +1597,23 @@
 
         // Load attendance report
         async function loadAttendanceReport() {
-            const dateFrom = document.getElementById('dateFrom').value || 
+            const dateFrom = document.getElementById('dateFrom').value ||
                 new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            const dateTo = document.getElementById('dateTo').value || 
+            const dateTo = document.getElementById('dateTo').value ||
                 new Date().toISOString().split('T')[0];
             const classFilter = document.getElementById('classFilter').value;
-            
+
             try {
                 const response = await fetch(
                     `/api/admin/attendance?from=${dateFrom}&to=${dateTo}&class=${encodeURIComponent(classFilter)}`,
-                    { headers: authHeaders() }
+                    {headers: authHeaders()}
                 );
                 const data = await response.json();
-                
+
                 if (data.success) {
                     updateAttendanceTable(data.attendance);
                     const classLabel = classFilter ? ` · Kelas ${classFilter}` : '';
-                    document.getElementById('attendanceCount').textContent = 
+                    document.getElementById('attendanceCount').textContent =
                         `Menampilkan ${data.total_records} data (${dateFrom} sampai ${dateTo})${classLabel}`;
                 }
             } catch (error) {
@@ -1536,7 +1624,7 @@
         // Update attendance table
         function updateAttendanceTable(attendance) {
             const container = document.getElementById('attendanceTable');
-            
+
             if (!attendance || attendance.length === 0) {
                 container.innerHTML = `
                     <tr>
@@ -1548,12 +1636,12 @@
                 `;
                 return;
             }
-            
+
             container.innerHTML = attendance.map(record => {
                 const timestamp = new Date(record.timestamp);
                 const dateStr = timestamp.toLocaleDateString('id-ID');
                 const timeStr = timestamp.toLocaleTimeString('id-ID');
-                
+
                 return `
                     <tr class="border-b border-gray-100 hover:bg-gray-50">
                         <td class="py-3 px-4">${record.nis}</td>
@@ -1568,16 +1656,16 @@
 
         // Export to CSV
         async function exportToCSV() {
-            const dateFrom = document.getElementById('dateFrom').value || 
+            const dateFrom = document.getElementById('dateFrom').value ||
                 new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            const dateTo = document.getElementById('dateTo').value || 
+            const dateTo = document.getElementById('dateTo').value ||
                 new Date().toISOString().split('T')[0];
             const classFilter = document.getElementById('classFilter').value;
 
             try {
                 const response = await fetch(
                     `/api/admin/export/attendance?from=${dateFrom}&to=${dateTo}&class=${encodeURIComponent(classFilter)}`,
-                    { headers: authHeaders() }
+                    {headers: authHeaders()}
                 );
                 if (!response.ok) throw new Error('Export gagal');
                 const blob = await response.blob();
@@ -1598,7 +1686,7 @@
         // Load PPDB admissions
         async function loadAdmissions() {
             try {
-                const response = await fetch('/api/admission/list', { headers: authHeaders() });
+                const response = await fetch('/api/admission/list', {headers: authHeaders()});
                 const data = await response.json();
 
                 if (data.success) {
@@ -1668,15 +1756,15 @@
             document.getElementById('admissionDocsModal').classList.remove('hidden');
 
             try {
-                const response = await fetch(`/api/admission/${id}/documents`, { headers: authHeaders() });
+                const response = await fetch(`/api/admission/${id}/documents`, {headers: authHeaders()});
                 const data = await response.json();
                 const list = document.getElementById('admissionDocsList');
 
                 const requiredTypes = [
-                    { key: 'nik', label: 'Kartu Keluarga / NIK' },
-                    { key: 'akta_lahir', label: 'Akta Kelahiran' },
-                    { key: 'bukti_bayar', label: 'Bukti Pembayaran PPDB' },
-                    { key: 'lainnya', label: 'Berkas Pendukung Lainnya' }
+                    {key: 'nik', label: 'Kartu Keluarga / NIK'},
+                    {key: 'akta_lahir', label: 'Akta Kelahiran'},
+                    {key: 'bukti_bayar', label: 'Bukti Pembayaran PPDB'},
+                    {key: 'lainnya', label: 'Berkas Pendukung Lainnya'}
                 ];
                 const docsMap = {};
                 (data.documents || []).forEach(d => docsMap[d.doc_type] = d);
@@ -1709,7 +1797,7 @@
         async function setAdmissionStatus(id, status, name) {
             const label = status === 'diterima' ? 'menerima'
                 : status === 'perlu_lengkapi_berkas' ? 'meminta lengkapi berkas'
-                : status === 'ditolak' ? 'menolak' : 'memperbarui';
+                    : status === 'ditolak' ? 'menolak' : 'memperbarui';
             let note = '';
             if (status === 'ditolak') {
                 note = prompt(`Catatan untuk ${name} (opsional, boleh dikosongkan):`) || '';
@@ -1721,8 +1809,8 @@
             try {
                 const response = await fetch(`/api/admission/${id}/status`, {
                     method: 'PUT',
-                    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-                    body: JSON.stringify({ status, note })
+                    headers: Object.assign({'Content-Type': 'application/json'}, authHeaders()),
+                    body: JSON.stringify({status, note})
                 });
                 const result = await response.json();
                 if (result.success) {
@@ -1771,7 +1859,7 @@
             try {
                 const response = await fetch('/api/school-info', {
                     method: 'PUT',
-                    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                    headers: Object.assign({'Content-Type': 'application/json'}, authHeaders()),
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
@@ -1868,7 +1956,7 @@
             document.getElementById('teacherPasswordHint').style.display = 'block';
             document.getElementById('teacherModal').classList.remove('hidden');
             // Set kelas perwalian setelah dropdown-nya siap terisi (loadTeachers sudah dipanggil sebelumnya)
-            setTimeout(() => { document.getElementById('teacherHomeroom').value = teacher.homeroom_class || ''; }, 0);
+            setTimeout(() => {document.getElementById('teacherHomeroom').value = teacher.homeroom_class || '';}, 0);
         }
 
         document.getElementById('teacherForm').addEventListener('submit', async function (e) {
@@ -1886,7 +1974,7 @@
                 const method = editingTeacherId ? 'PUT' : 'POST';
                 const response = await fetch(url, {
                     method: method,
-                    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                    headers: Object.assign({'Content-Type': 'application/json'}, authHeaders()),
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
@@ -1935,9 +2023,9 @@
                         <div class="bg-white rounded-xl shadow p-5 flex items-start justify-between">
                             <div class="flex items-start gap-3">
                                 ${ex.photo
-                                    ? `<img src="${ex.photo}" class="w-14 h-14 object-cover rounded-lg flex-shrink-0">`
-                                    : `<div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas ${ex.icon} text-xl"></i></div>`
-                                }
+                            ? `<img src="${ex.photo}" class="w-14 h-14 object-cover rounded-lg flex-shrink-0">`
+                            : `<div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas ${ex.icon} text-xl"></i></div>`
+                        }
                                 <div>
                                     <div class="font-bold text-gray-800">${ex.name}</div>
                                     <div class="text-sm text-gray-500">${ex.description || '-'}</div>
@@ -1966,7 +2054,7 @@
 
         document.getElementById('exPhoto').addEventListener('change', function (e) {
             const file = e.target.files[0];
-            if (!file) { exPhotoBase64 = ''; document.getElementById('exPhotoPreview').classList.add('hidden'); return; }
+            if (!file) {exPhotoBase64 = ''; document.getElementById('exPhotoPreview').classList.add('hidden'); return;}
             const reader = new FileReader();
             reader.onload = function (ev) {
                 exPhotoBase64 = ev.target.result;
@@ -1990,7 +2078,7 @@
             try {
                 const response = await fetch('/api/extracurriculars/add', {
                     method: 'POST',
-                    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                    headers: Object.assign({'Content-Type': 'application/json'}, authHeaders()),
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
@@ -2028,7 +2116,7 @@
         async function loadEkskulRegistrations() {
             const tbody = document.getElementById('ekskulRegistrationsTable');
             try {
-                const response = await fetch('/api/ekskul/registrations', { headers: authHeaders() });
+                const response = await fetch('/api/ekskul/registrations', {headers: authHeaders()});
                 const data = await response.json();
 
                 if (data.success && data.registrations.length > 0) {
@@ -2067,9 +2155,9 @@
                     list.innerHTML = data.announcements.map(a => `
                         <div class="bg-white rounded-xl shadow p-4 flex items-start gap-4">
                             ${a.image
-                                ? `<img src="${a.image}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0">`
-                                : `<div class="w-20 h-20 bg-rose-100 text-rose-500 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-bullhorn text-xl"></i></div>`
-                            }
+                            ? `<img src="${a.image}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0">`
+                            : `<div class="w-20 h-20 bg-rose-100 text-rose-500 rounded-lg flex items-center justify-center flex-shrink-0"><i class="fas fa-bullhorn text-xl"></i></div>`
+                        }
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1">
                                     ${a.is_pinned ? '<span class="bg-amber-50 text-amber-600 text-xs font-semibold px-2 py-0.5 rounded-full"><i class="fas fa-thumbtack mr-1"></i>Disematkan</span>' : ''}
@@ -2102,7 +2190,7 @@
 
         document.getElementById('annImage').addEventListener('change', function (e) {
             const file = e.target.files[0];
-            if (!file) { annImageBase64 = ''; document.getElementById('annImagePreview').classList.add('hidden'); return; }
+            if (!file) {annImageBase64 = ''; document.getElementById('annImagePreview').classList.add('hidden'); return;}
             const reader = new FileReader();
             reader.onload = function (ev) {
                 annImageBase64 = ev.target.result;
@@ -2126,7 +2214,7 @@
             try {
                 const response = await fetch('/api/announcements/add', {
                     method: 'POST',
-                    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                    headers: Object.assign({'Content-Type': 'application/json'}, authHeaders()),
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
@@ -2164,12 +2252,12 @@
         async function loadYearlyAdmissionStats() {
             const tbody = document.getElementById('yearlyAdmissionTable');
             try {
-                const response = await fetch('/api/admission/stats-yearly', { headers: authHeaders() });
+                const response = await fetch('/api/admission/stats-yearly', {headers: authHeaders()});
                 const data = await response.json();
 
                 if (!data.success || data.yearly.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-gray-400">Belum ada data pendaftar PPDB</td></tr>`;
-                    if (yearlyChartInstance) { yearlyChartInstance.destroy(); yearlyChartInstance = null; }
+                    if (yearlyChartInstance) {yearlyChartInstance.destroy(); yearlyChartInstance = null;}
                     return;
                 }
 
@@ -2201,8 +2289,8 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                        plugins: {legend: {display: false}},
+                        scales: {y: {beginAtZero: true, ticks: {precision: 0}}}
                     }
                 });
             } catch (error) {
@@ -2229,7 +2317,7 @@
             try {
                 const response = await fetch(
                     `/api/admin/export/attendance?from=${weekAgo}&to=${today}`,
-                    { headers: authHeaders() }
+                    {headers: authHeaders()}
                 );
                 if (!response.ok) throw new Error('Export gagal');
                 const blob = await response.blob();
@@ -2248,4 +2336,5 @@
         }
     </script>
 </body>
+
 </html>
