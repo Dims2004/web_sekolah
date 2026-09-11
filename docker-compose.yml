@@ -7,7 +7,14 @@ services:
     ports:
       - "8080:5000"
     volumes:
+      # Volume ini cuma dipakai kalau DATABASE_URL di bawah TIDAK diset
+      # (fallback ke SQLite lokal). Kalau DATABASE_URL sudah diisi, data
+      # disimpan di server PostgreSQL, bukan di file ini.
       - ./database:/app/database
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
+      # Isi dengan connection string PostgreSQL untuk hosting produksi, mis:
+      # postgresql://user:password@host:5432/dbname?sslmode=require
+      # Kosongkan (atau hapus baris ini) untuk tetap pakai SQLite lokal.
+      - DATABASE_URL=${DATABASE_URL:-}
